@@ -1,7 +1,7 @@
 import express from "express";
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 // Define a basic route
 app.get("/api/v1/naturants", (req, res) => {
@@ -9,5 +9,5 @@ app.get("/api/v1/naturants", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`⚡️[server]: Server is running on port ${port}`);
 });
