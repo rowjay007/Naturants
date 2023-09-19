@@ -1,0 +1,188 @@
+[
+  {
+    "restaurantName": "Tasty Bites",
+    "address": "123 Main Street",
+    "phone": "555-123-4567",
+    "menuItems": [
+      { "itemName": "Burger", "price": 8.99 },
+      { "itemName": "Pizza", "price": 10.99 },
+      { "itemName": "Pasta", "price": 12.99 }
+    ],
+    "employees": [
+      { "employeeName": "John Smith", "position": "Chef" },
+      { "employeeName": "Jane Doe", "position": "Waiter" },
+      { "employeeName": "Mike Johnson", "position": "Manager" }
+    ],
+    "orders": [
+      {
+        "orderNumber": 1,
+        "tableNumber": 5,
+        "items": ["Burger", "Pizza"],
+        "totalAmount": 19.98
+      },
+      {
+        "orderNumber": 2,
+        "tableNumber": 3,
+        "items": ["Pasta"],
+        "totalAmount": 12.99
+      }
+    ],
+    "customers": [
+      { "customerName": "Alice Johnson", "phoneNumber": "555-555-5555" },
+      { "customerName": "Bob Davis", "phoneNumber": "555-666-7777" }
+    ]
+  },
+  {
+    "restaurantName": "Spice World",
+    "address": "456 Oak Avenue",
+    "phone": "555-987-6543",
+    "menuItems": [
+      { "itemName": "Curry", "price": 14.99 },
+      { "itemName": "Sushi", "price": 18.99 },
+      { "itemName": "Noodles", "price": 11.99 }
+    ],
+    "employees": [
+      { "employeeName": "Emily Lee", "position": "Chef" },
+      { "employeeName": "David Brown", "position": "Waiter" },
+      { "employeeName": "Sophia Wilson", "position": "Manager" }
+    ],
+    "orders": [],
+    "customers": []
+  },
+  {
+    "restaurantName": "Delightful Diner",
+    "address": "789 Elm Street",
+    "phone": "555-789-0123",
+    "menuItems": [
+      { "itemName": "Steak", "price": 19.99 },
+      { "itemName": "Salad", "price": 9.99 },
+      { "itemName": "Dessert", "price": 7.99 }
+    ],
+    "employees": [
+      { "employeeName": "Maria Garcia", "position": "Chef" },
+      { "employeeName": "Carlos Martinez", "position": "Waiter" },
+      { "employeeName": "Linda Clark", "position": "Manager" }
+    ],
+    "orders": [],
+    "customers": []
+  },
+  {
+    "restaurantName": "Sushi Sensation",
+    "address": "123 Maple Lane",
+    "phone": "555-555-1234",
+    "menuItems": [
+      { "itemName": "Sashimi Deluxe", "price": 22.99 },
+      { "itemName": "Dragon Roll", "price": 16.99 },
+      { "itemName": "Miso Soup", "price": 4.99 }
+    ],
+    "employees": [
+      { "employeeName": "Yuki Tanaka", "position": "Chef" },
+      { "employeeName": "Sarah Adams", "position": "Waiter" },
+      { "employeeName": "Michael Johnson", "position": "Manager" }
+    ],
+    "orders": [],
+    "customers": []
+  },
+  {
+    "restaurantName": "Pizza Palace",
+    "address": "567 Pepperoni Street",
+    "phone": "555-333-8888",
+    "menuItems": [
+      { "itemName": "Pepperoni Pizza", "price": 12.99 },
+      { "itemName": "Margherita Pizza", "price": 11.99 },
+      { "itemName": "Garlic Knots", "price": 5.99 }
+    ],
+    "employees": [
+      { "employeeName": "Tony Russo", "position": "Chef" },
+      { "employeeName": "Sara Anderson", "position": "Waiter" },
+      { "employeeName": "Paula Martinez", "position": "Manager" }
+    ],
+    "orders": [],
+    "customers": []
+  },
+  {
+    "restaurantName": "Burger Haven",
+    "address": "789 Burger Lane",
+    "phone": "555-777-5555",
+    "menuItems": [
+      { "itemName": "Classic Burger", "price": 9.99 },
+      { "itemName": "Veggie Burger", "price": 8.99 },
+      { "itemName": "Onion Rings", "price": 4.99 }
+    ],
+    "employees": [
+      { "employeeName": "Sam Johnson", "position": "Chef" },
+      { "employeeName": "Lily Davis", "position": "Waiter" },
+      { "employeeName": "Alex Wilson", "position": "Manager" }
+    ],
+    "orders": [],
+    "customers": []
+  },
+  {
+    "restaurantName": "Mediterranean Delights",
+    "address": "123 Olive Avenue",
+    "phone": "555-444-2222",
+    "menuItems": [
+      { "itemName": "Hummus Plate", "price": 9.99 },
+      { "itemName": "Falafel Wrap", "price": 10.99 },
+      { "itemName": "Baklava", "price": 7.99 }
+    ],
+    "employees": [
+      { "employeeName": "Elena Costa", "position": "Chef" },
+      { "employeeName": "Diego Lopez", "position": "Waiter" },
+      { "employeeName": "Nina Rodriguez", "position": "Manager" }
+    ],
+    "orders": [],
+    "customers": []
+  },
+  {
+    "restaurantName": "Steakhouse Deluxe",
+    "address": "456 Ribeye Road",
+    "phone": "555-222-6666",
+    "menuItems": [
+      { "itemName": "Ribeye Steak", "price": 24.99 },
+      { "itemName": "Filet Mignon", "price": 26.99 },
+      { "itemName": "Loaded Baked Potato", "price": 7.99 }
+    ],
+    "employees": [
+      { "employeeName": "Chris Smith", "position": "Chef" },
+      { "employeeName": "Laura Brown", "position": "Waiter" },
+      { "employeeName": "Mark Taylor", "position": "Manager" }
+    ],
+    "orders": [],
+    "customers": []
+  },
+  {
+    "restaurantName": "Café de Paris",
+    "address": "789 Croissant Avenue",
+    "phone": "555-888-7777",
+    "menuItems": [
+      { "itemName": "Croissant Breakfast", "price": 12.99 },
+      { "itemName": "Quiche Lorraine", "price": 11.99 },
+      { "itemName": "Café au Lait", "price": 3.99 }
+    ],
+    "employees": [
+      { "employeeName": "Sophie Blanc", "position": "Chef" },
+      { "employeeName": "Lucas Dupont", "position": "Waiter" },
+      { "employeeName": "Eva Martin", "position": "Manager" }
+    ],
+    "orders": [],
+    "customers": []
+  },
+  {
+    "restaurantName": "BBQ Smokehouse",
+    "address": "123 Hickory Lane",
+    "phone": "555-777-4444",
+    "menuItems": [
+      { "itemName": "Pulled Pork Sandwich", "price": 13.99 },
+      { "itemName": "Brisket Platter", "price": 16.99 },
+      { "itemName": "Coleslaw", "price": 4.99 }
+    ],
+    "employees": [
+      { "employeeName": "Jack Thompson", "position": "Chef" },
+      { "employeeName": "Grace Johnson", "position": "Waiter" },
+      { "employeeName": "Daniel Davis", "position": "Manager" }
+    ],
+    "orders": [],
+    "customers": []
+  }
+]
