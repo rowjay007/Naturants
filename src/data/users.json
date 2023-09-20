@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "username": "alice_johnson",
+    "email": "alice@example.com",
+    "password": "password123",
+    "role": "customer"
+  },
+  {
+    "id": 2,
+    "username": "bob_davis",
+    "email": "bob@example.com",
+    "password": "securepass",
+    "role": "customer"
+  },
+  {
+    "id": 3,
+    "username": "chef_john",
+    "email": "chef@example.com",
+    "password": "chefpass",
+    "role": "chef"
+  },
+  {
+    "id": 4,
+    "username": "waiter_jane",
+    "email": "jane@example.com",
+    "password": "waiterpass",
+    "role": "waiter"
+  },
+  {
+    "id": 5,
+    "username": "manager_mike",
+    "email": "mike@example.com",
+    "password": "managerpass",
+    "role": "manager"
+  },
+  {
+    "id": 6,
+    "username": "emily_lee",
+    "email": "emily@example.com",
+    "password": "emilypass",
+    "role": "chef"
+  },
+  {
+    "id": 7,
+    "username": "david_brown",
+    "email": "david@example.com",
+    "password": "davidpass",
+    "role": "waiter"
+  },
+  {
+    "id": 8,
+    "username": "sophia_wilson",
+    "email": "sophia@example.com",
+    "password": "sophiapass",
+    "role": "manager"
+  },
+  {
+    "id": 9,
+    "username": "maria_garcia",
+    "email": "maria@example.com",
+    "password": "mariapass",
+    "role": "chef"
+  },
+  {
+    "id": 10,
+    "username": "carlos_martinez",
+    "email": "carlos@example.com",
+    "password": "carlospass",
+    "role": "waiter"
+  }
+]
