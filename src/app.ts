@@ -1,27 +1,53 @@
 import express from "express";
-import { readFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 
 const app = express();
 const PORT = 3001;
 
 app.use(express.json());
 
-const dataPath = "src/data/naturants-sample.json"; // Assuming your data file is in the src/data directory
+const dataPath = "src/data/naturants-sample.json";
 
 interface Naturant {
   id: number;
-  // Add other properties here as needed
+  restaurantName: string;
+  address: string;
+  phone: string;
+  menuItems: { itemName: string; price: number }[];
+  employees: { employeeName: string; position: string }[];
+  orders: any[]; // Define your orders and customers types as needed
+  customers: any[];
 }
 
-// Refactor the code to use an Express router
-const router = express.Router();
+const readData = async () => {
+  const rawData = await readFile(dataPath, "utf-8");
+  return JSON.parse(rawData) as Naturant[];
+};
 
-// Define a route with a URL parameter
-router.get("/api/v1/naturants/:id", async (req, res) => {
+const writeData = async (data: Naturant[]) => {
+  await writeFile(dataPath, JSON.stringify(data, null, 2), "utf-8");
+};
+
+// GET all naturants
+app.get("/api/v1/naturants", async (req, res) => {
+  try {
+    const naturants = await readData();
+    res.json({
+      status: "success",
+      length: naturants.length,
+      data: naturants,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// GET a single naturant by ID
+app.get("/api/v1/naturants/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const rawData = await readFile(dataPath, "utf-8");
-    const naturants: Naturant[] = JSON.parse(rawData); // Annotate the type here
+    const naturants = await readData();
     const selectedNaturant = naturants.find(
       (naturant) => naturant.id === parseInt(id)
     );
@@ -41,16 +67,22 @@ router.get("/api/v1/naturants/:id", async (req, res) => {
   }
 });
 
-// Define a route to handle GET requests to /api/v1/naturants without an id parameter
-router.get("/api/v1/naturants", async (req, res) => {
+// POST a new naturant
+app.post("/api/v1/naturants", async (req, res) => {
   try {
-    const rawData = await readFile(dataPath, "utf-8");
-    const naturants: Naturant[] = JSON.parse(rawData);
+    const newNaturant: Naturant = req.body;
+    const naturants = await readData();
 
-    res.json({
+    // Generate a unique ID for the new naturant
+    const maxId = Math.max(...naturants.map((naturant) => naturant.id));
+    newNaturant.id = maxId + 1;
+
+    naturants.push(newNaturant);
+    await writeData(naturants);
+
+    res.status(201).json({
       status: "success",
-      length: naturants.length,
-      data: naturants,
+      data: newNaturant,
     });
   } catch (err) {
     console.error(err);
@@ -58,8 +90,92 @@ router.get("/api/v1/naturants", async (req, res) => {
   }
 });
 
-// Mount the router on the main Express app
-app.use("/", router);
+// PUT (replace) a naturant by ID
+app.put("/api/v1/naturants/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedNaturant: Naturant = req.body;
+    const naturants = await readData();
+
+    const existingNaturantIndex = naturants.findIndex(
+      (naturant) => naturant.id === parseInt(id)
+    );
+
+    if (existingNaturantIndex === -1) {
+      res.status(404).json({ error: "Naturant not found" });
+      return;
+    }
+
+    naturants[existingNaturantIndex] = updatedNaturant;
+    await writeData(naturants);
+
+    res.json({
+      status: "success",
+      data: updatedNaturant,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// PATCH (update) a naturant by ID
+app.patch("/api/v1/naturants/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates: Partial<Naturant> = req.body;
+    const naturants = await readData();
+
+    const existingNaturantIndex = naturants.findIndex(
+      (naturant) => naturant.id === parseInt(id)
+    );
+
+    if (existingNaturantIndex === -1) {
+      res.status(404).json({ error: "Naturant not found" });
+      return;
+    }
+
+    const updatedNaturant = { ...naturants[existingNaturantIndex], ...updates };
+    naturants[existingNaturantIndex] = updatedNaturant;
+    await writeData(naturants);
+
+    res.json({
+      status: "success",
+      data: updatedNaturant,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// DELETE a naturant by ID
+app.delete("/api/v1/naturants/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const naturants = await readData();
+
+    const existingNaturantIndex = naturants.findIndex(
+      (naturant) => naturant.id === parseInt(id)
+    );
+
+    if (existingNaturantIndex === -1) {
+      res.status(404).json({ error: "Naturant not found" });
+      return;
+    }
+
+    const deletedNaturant = naturants.splice(existingNaturantIndex, 1)[0];
+    await writeData(naturants);
+
+    res.json({
+      status: "success",
+      data: deletedNaturant,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`⚡️[server]: Server is running on port ${PORT}`);
