@@ -1,10 +1,14 @@
 import express from "express";
 import { readFile, writeFile } from "fs/promises";
-
+import morgan from "morgan";
 const app = express();
 const PORT = 3001;
 
 app.use(express.json());
+const morganMiddleware = morgan("dev");
+
+// Use Morgan middleware for logging requests
+app.use(morganMiddleware);
 
 const dataPath = "src/data/naturants-sample.json";
 
