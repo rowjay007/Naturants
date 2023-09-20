@@ -1,5 +1,6 @@
 [
   {
+    "id": 1,
     "restaurantName": "Tasty Bites",
     "address": "123 Main Street",
     "phone": "555-123-4567",
@@ -33,6 +34,7 @@
     ]
   },
   {
+    "id": 2,
     "restaurantName": "Spice World",
     "address": "456 Oak Avenue",
     "phone": "555-987-6543",
@@ -50,6 +52,7 @@
     "customers": []
   },
   {
+    "id": 3,
     "restaurantName": "Delightful Diner",
     "address": "789 Elm Street",
     "phone": "555-789-0123",
@@ -67,6 +70,7 @@
     "customers": []
   },
   {
+    "id": 4,
     "restaurantName": "Sushi Sensation",
     "address": "123 Maple Lane",
     "phone": "555-555-1234",
@@ -84,6 +88,7 @@
     "customers": []
   },
   {
+    "id": 5,
     "restaurantName": "Pizza Palace",
     "address": "567 Pepperoni Street",
     "phone": "555-333-8888",
@@ -101,6 +106,7 @@
     "customers": []
   },
   {
+    "id": 6,
     "restaurantName": "Burger Haven",
     "address": "789 Burger Lane",
     "phone": "555-777-5555",
@@ -118,6 +124,7 @@
     "customers": []
   },
   {
+    "id": 7,
     "restaurantName": "Mediterranean Delights",
     "address": "123 Olive Avenue",
     "phone": "555-444-2222",
@@ -135,6 +142,7 @@
     "customers": []
   },
   {
+    "id": 8,
     "restaurantName": "Steakhouse Deluxe",
     "address": "456 Ribeye Road",
     "phone": "555-222-6666",
@@ -152,6 +160,7 @@
     "customers": []
   },
   {
+    "id": 9,
     "restaurantName": "Café de Paris",
     "address": "789 Croissant Avenue",
     "phone": "555-888-7777",
@@ -169,6 +178,7 @@
     "customers": []
   },
   {
+    "id": 10,
     "restaurantName": "BBQ Smokehouse",
     "address": "123 Hickory Lane",
     "phone": "555-777-4444",
