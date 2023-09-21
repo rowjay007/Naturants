@@ -206,11 +206,13 @@ async function updateNaturantPartially(
 }
 
 // Define routes using the controller functions
-router.get("/", getAllNaturants);
-router.post("/", createNaturant);
-router.get("/:id", getNaturantById);
-router.put("/:id", updateNaturantById);
-router.delete("/:id", deleteNaturantById);
-router.patch("/:id", updateNaturantPartially);
+router.route("/").get(getAllNaturants).post(createNaturant);
+
+router
+  .route("/:id")
+  .get(getNaturantById)
+  .put(updateNaturantById)
+  .delete(deleteNaturantById)
+  .patch(updateNaturantPartially);
 
 export default router;

@@ -194,11 +194,13 @@ async function deleteUserById(req: express.Request, res: express.Response) {
 }
 
 // Define routes using the controller functions
-router.get("/", getAllUsers);
-router.post("/", createUser);
-router.get("/:id", getUserById);
-router.put("/:id", updateUserById);
-router.patch("/:id", updateUserByIdPatch);
-router.delete("/:id", deleteUserById);
+router.route("/").get(getAllUsers).post(createUser);
+
+router
+  .route("/:id")
+  .get(getUserById)
+  .put(updateUserById)
+  .patch(updateUserByIdPatch)
+  .delete(deleteUserById);
 
 export default router;

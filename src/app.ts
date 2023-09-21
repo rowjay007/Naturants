@@ -1,9 +1,7 @@
-// app.ts
-
 import express from "express";
 import morgan from "morgan";
 import naturantsRoutes from "./routes/naturantsRoutes";
-import usersRoutes from "./routes/usersRoutes";
+import usersRoutes from "./routes/usersRoutes"; // Import the combined routes
 
 const app = express();
 const PORT = 3001;
@@ -27,8 +25,9 @@ app.use(
   }
 );
 
-app.use("/api/v1/users", usersRoutes); // Mount usersRoutes at /api/v1/users
-app.use("/api/v1/naturants", naturantsRoutes); // Mount naturantsRoutes at /api/v1/naturants
+// Routes
+app.use("/api/v1/naturants", naturantsRoutes);
+app.use("/api/v1/users", usersRoutes);
 
 app.listen(PORT, () => {
   console.log(`⚡️[server]: Server is running on port ${PORT}`);
