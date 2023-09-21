@@ -1,34 +1,37 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import cors from "cors";
 import express from "express";
 import morgan from "morgan";
 import naturantsRoutes from "./routes/naturantsRoutes";
-import usersRoutes from "./routes/usersRoutes"; // Import the combined routes
+import usersRoutes from "./routes/usersRoutes";
 
 const app = express();
-const PORT = 3001;
+const port = process.env.PORT || 3001;
 
 app.use(express.json());
-
-// Middleware for logging
 app.use(morgan("dev"));
+app.use(cors());
 
-// Middleware for handling errors
+app.use("/api/v1/users", usersRoutes);
+app.use("/api/v1/naturants", naturantsRoutes);
+
 app.use(
   (
-    err: Error,
+    err: any,
     req: express.Request,
     res: express.Response,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     next: express.NextFunction
   ) => {
     console.error(err.stack);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).send("Something broke!");
   }
 );
 
-// Routes
-app.use("/api/v1/naturants", naturantsRoutes);
-app.use("/api/v1/users", usersRoutes);
+export default app; // Export the 'app' object as the default export
 
-app.listen(PORT, () => {
-  console.log(`⚡️[server]: Server is running on port ${PORT}`);
+const server = app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
 });
+
+export { server }; // Optionally, you can also export the 'server' object
