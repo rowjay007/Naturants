@@ -64,9 +64,9 @@
   },
   {
     "id": 10,
-    "username": "carlos_martinez",
-    "email": "carlos@example.com",
-    "password": "carlospass",
-    "role": "waiter"
+    "username": "marlos_mart",
+    "email": "marlos@example.co",
+    "password": "marlospas",
+    "role": "waite"
   }
 ]

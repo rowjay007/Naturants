@@ -14,14 +14,13 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 // Middleware for handling errors
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use(
   (
     err: Error,
     req: express.Request,
     res: express.Response,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    next: express.NextFunction // Add the next parameter here
+    next: express.NextFunction
   ) => {
     console.error(err.stack);
     res.status(500).json({ error: "Internal Server Error" });

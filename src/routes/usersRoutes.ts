@@ -13,14 +13,31 @@ interface User {
   role: string;
 }
 
-// Create a User
-router.post("/", async (req, res) => {
+// Middleware to read user data
+async function readUserData() {
+  const userData = await readFile("src/data/users.json", "utf-8");
+  return JSON.parse(userData) as User[];
+}
+
+// Controller to get all users
+async function getAllUsers(req: express.Request, res: express.Response) {
+  try {
+    const users = await readUserData();
+    res.json({
+      status: "success",
+      data: users,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+// Controller to create a new user
+async function createUser(req: express.Request, res: express.Response) {
   try {
     const newUser: User = req.body;
-
-    // Read the user data from users.json
-    const userData = await readFile("src/data/users.json", "utf-8");
-    const users: User[] = JSON.parse(userData);
+    const users = await readUserData();
 
     // Generate a unique ID for the new user
     const maxId = Math.max(...users.map((user) => user.id));
@@ -43,32 +60,36 @@ router.post("/", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
-});
+}
 
-// Get All Users
-router.get("/", async (req, res) => {
+// Controller to get a user by ID
+async function getUserById(req: express.Request, res: express.Response) {
   try {
-    // Read the user data from users.json
-    const userData = await readFile("src/data/users.json", "utf-8");
-    const users: User[] = JSON.parse(userData);
+    const { id } = req.params;
+    const users = await readUserData();
+    const selectedUser = users.find((user) => user.id === parseInt(id));
+
+    if (!selectedUser) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
 
     res.json({
       status: "success",
-      data: users,
+      data: selectedUser,
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
-});
+}
 
-// Update a User by ID
-router.put("/:id", async (req, res) => {
+// Controller to update a user by ID (PUT)
+async function updateUserById(req: express.Request, res: express.Response) {
   try {
     const { id } = req.params;
     const updatedUser: User = req.body;
-    const userData = await readFile("src/data/users.json", "utf-8");
-    const users: User[] = JSON.parse(userData);
+    const users = await readUserData();
 
     const existingUserIndex = users.findIndex(
       (user) => user.id === parseInt(id)
@@ -97,14 +118,52 @@ router.put("/:id", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
-});
+}
 
-// Delete a User by ID
-router.delete("/:id", async (req, res) => {
+// Controller to update a user by ID (PATCH)
+async function updateUserByIdPatch(
+  req: express.Request,
+  res: express.Response
+) {
   try {
     const { id } = req.params;
-    const userData = await readFile("src/data/users.json", "utf-8");
-    const users: User[] = JSON.parse(userData);
+    const updatedFields: Partial<User> = req.body;
+    const users = await readUserData();
+
+    const existingUserIndex = users.findIndex(
+      (user) => user.id === parseInt(id)
+    );
+
+    if (existingUserIndex === -1) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    const updatedUser = { ...users[existingUserIndex], ...updatedFields };
+    users[existingUserIndex] = updatedUser;
+
+    // Write the updated user data back to users.json
+    await writeFile(
+      "src/data/users.json",
+      JSON.stringify(users, null, 2),
+      "utf-8"
+    );
+
+    res.json({
+      status: "success",
+      data: updatedUser,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+// Controller to delete a user by ID
+async function deleteUserById(req: express.Request, res: express.Response) {
+  try {
+    const { id } = req.params;
+    const users = await readUserData();
 
     const existingUserIndex = users.findIndex(
       (user) => user.id === parseInt(id)
@@ -132,6 +191,14 @@ router.delete("/:id", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
-});
+}
+
+// Define routes using the controller functions
+router.get("/", getAllUsers);
+router.post("/", createUser);
+router.get("/:id", getUserById);
+router.put("/:id", updateUserById);
+router.patch("/:id", updateUserByIdPatch);
+router.delete("/:id", deleteUserById);
 
 export default router;

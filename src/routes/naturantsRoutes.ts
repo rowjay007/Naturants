@@ -16,17 +16,34 @@ interface Naturant {
   customers: any[];
 }
 
-// Create a Naturant
-router.post("/", async (req, res) => {
+// Middleware to read naturant data
+async function readNaturantData() {
+  const naturantData = await readFile(
+    "src/data/naturants-sample.json",
+    "utf-8"
+  );
+  return JSON.parse(naturantData) as Naturant[];
+}
+
+// Controller to get all naturants
+async function getAllNaturants(req: express.Request, res: express.Response) {
+  try {
+    const naturants = await readNaturantData();
+    res.json({
+      status: "success",
+      data: naturants,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+// Controller to create a new naturant
+async function createNaturant(req: express.Request, res: express.Response) {
   try {
     const newNaturant: Naturant = req.body;
-
-    // Read the naturant data from naturants-sample.json
-    const naturantData = await readFile(
-      "src/data/naturants-sample.json",
-      "utf-8"
-    );
-    const naturants: Naturant[] = JSON.parse(naturantData);
+    const naturants = await readNaturantData();
 
     // Generate a unique ID for the new naturant
     const maxId = Math.max(...naturants.map((naturant) => naturant.id));
@@ -49,38 +66,14 @@ router.post("/", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
-});
+}
 
-// Get All Naturants
-router.get("/", async (req, res) => {
-  try {
-    // Read the naturant data from naturants-sample.json
-    const naturantData = await readFile(
-      "src/data/naturants-sample.json",
-      "utf-8"
-    );
-    const naturants: Naturant[] = JSON.parse(naturantData);
-
-    res.json({
-      status: "success",
-      data: naturants,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-// Update a Naturant by ID
-router.put("/:id", async (req, res) => {
+// Controller to update a naturant by ID (PUT)
+async function updateNaturantById(req: express.Request, res: express.Response) {
   try {
     const { id } = req.params;
     const updatedNaturant: Naturant = req.body;
-    const naturantData = await readFile(
-      "src/data/naturants-sample.json",
-      "utf-8"
-    );
-    const naturants: Naturant[] = JSON.parse(naturantData);
+    const naturants = await readNaturantData();
 
     const existingNaturantIndex = naturants.findIndex(
       (naturant) => naturant.id === parseInt(id)
@@ -109,17 +102,13 @@ router.put("/:id", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
-});
+}
 
-// Delete a Naturant by ID
-router.delete("/:id", async (req, res) => {
+// Controller to delete a naturant by ID
+async function deleteNaturantById(req: express.Request, res: express.Response) {
   try {
     const { id } = req.params;
-    const naturantData = await readFile(
-      "src/data/naturants-sample.json",
-      "utf-8"
-    );
-    const naturants: Naturant[] = JSON.parse(naturantData);
+    const naturants = await readNaturantData();
 
     const existingNaturantIndex = naturants.findIndex(
       (naturant) => naturant.id === parseInt(id)
@@ -147,6 +136,81 @@ router.delete("/:id", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
-});
+}
+
+// Controller to get a naturant by ID
+async function getNaturantById(req: express.Request, res: express.Response) {
+  try {
+    const { id } = req.params;
+    const naturants = await readNaturantData();
+
+    const selectedNaturant = naturants.find(
+      (naturant) => naturant.id === parseInt(id)
+    );
+
+    if (!selectedNaturant) {
+      res.status(404).json({ error: "Naturant not found" });
+      return;
+    }
+
+    res.json({
+      status: "success",
+      data: selectedNaturant,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+// Controller to update a naturant by ID (PATCH)
+async function updateNaturantPartially(
+  req: express.Request,
+  res: express.Response
+) {
+  try {
+    const { id } = req.params;
+    const updatedFields: Partial<Naturant> = req.body;
+    const naturants = await readNaturantData();
+
+    const existingNaturantIndex = naturants.findIndex(
+      (naturant) => naturant.id === parseInt(id)
+    );
+
+    if (existingNaturantIndex === -1) {
+      res.status(404).json({ error: "Naturant not found" });
+      return;
+    }
+
+    const updatedNaturant = {
+      ...naturants[existingNaturantIndex],
+      ...updatedFields,
+    };
+    naturants[existingNaturantIndex] = updatedNaturant;
+
+    // Write the updated naturant data back to naturants-sample.json
+    await writeFile(
+      "src/data/naturants-sample.json",
+      JSON.stringify(naturants, null, 2),
+      "utf-8"
+    );
+
+    res.json({
+      status: "success",
+      data: updatedNaturant,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+// Define routes using the controller functions
+router.get("/", getAllNaturants);
+router.post("/", createNaturant);
+router.get("/:id", getNaturantById);
+router.put("/:id", updateNaturantById);
+router.delete("/:id", deleteNaturantById);
+router.patch("/:id", updateNaturantPartially);
 
 export default router;
