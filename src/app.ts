@@ -28,10 +28,4 @@ app.use(
   }
 );
 
-export default app; // Export the 'app' object as the default export
-
-const server = app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
-});
-
-export { server }; // Optionally, you can also export the 'server' object
+export { app, port };
