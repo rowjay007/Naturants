@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import express from "express";
 import { readFile, writeFile } from "fs/promises";
 
@@ -13,9 +14,22 @@ interface Naturant {
   customers: any[];
 }
 
+// Param middleware to parse the 'id' parameter
+export async function parseNaturantId(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) {
+  const id = req.params.id;
+  req.naturantId = parseInt(id, 10); // Store the parsed ID in request object
+  next();
+}
+
+// Controller function to get all naturants
 export async function getAllNaturants(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
+  next: express.NextFunction
 ) {
   try {
     // Implement code for getting all naturants
@@ -30,14 +44,15 @@ export async function getAllNaturants(
       data: naturants,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
+// Controller function to create a new naturant
 export async function createNaturant(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
+  next: express.NextFunction
 ) {
   try {
     const newNaturant: Naturant = req.body;
@@ -61,21 +76,22 @@ export async function createNaturant(
       data: newNaturant,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
+// Controller function to get a naturant by ID
 export async function getNaturantById(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
+  next: express.NextFunction
 ) {
   try {
-    const { id } = req.params;
+    const { naturantId } = req;
     const naturants = await readNaturantData();
 
     const selectedNaturant = naturants.find(
-      (naturant) => naturant.id === parseInt(id)
+      (naturant) => naturant.id === naturantId
     );
 
     if (!selectedNaturant) {
@@ -88,22 +104,23 @@ export async function getNaturantById(
       data: selectedNaturant,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
+// Controller function to update a naturant by ID
 export async function updateNaturantById(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
+  next: express.NextFunction
 ) {
   try {
-    const { id } = req.params;
+    const { naturantId } = req;
     const updatedNaturant: Naturant = req.body;
     const naturants = await readNaturantData();
 
     const existingNaturantIndex = naturants.findIndex(
-      (naturant) => naturant.id === parseInt(id)
+      (naturant) => naturant.id === naturantId
     );
 
     if (existingNaturantIndex === -1) {
@@ -111,7 +128,7 @@ export async function updateNaturantById(
       return;
     }
 
-    updatedNaturant.id = parseInt(id);
+    updatedNaturant.id = naturantId;
     naturants[existingNaturantIndex] = updatedNaturant;
 
     // Write the updated naturant data back to naturants-sample.json
@@ -126,21 +143,22 @@ export async function updateNaturantById(
       data: updatedNaturant,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
+// Controller function to delete a naturant by ID
 export async function deleteNaturantById(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
+  next: express.NextFunction
 ) {
   try {
-    const { id } = req.params;
+    const { naturantId } = req;
     const naturants = await readNaturantData();
 
     const existingNaturantIndex = naturants.findIndex(
-      (naturant) => naturant.id === parseInt(id)
+      (naturant) => naturant.id === naturantId
     );
 
     if (existingNaturantIndex === -1) {
@@ -162,22 +180,23 @@ export async function deleteNaturantById(
       data: deletedNaturant,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
+// Controller function to partially update a naturant by ID
 export async function updateNaturantPartially(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
+  next: express.NextFunction
 ) {
   try {
-    const { id } = req.params;
+    const { naturantId } = req;
     const updatedFields: Partial<Naturant> = req.body;
     const naturants = await readNaturantData();
 
     const existingNaturantIndex = naturants.findIndex(
-      (naturant) => naturant.id === parseInt(id)
+      (naturant) => naturant.id === naturantId
     );
 
     if (existingNaturantIndex === -1) {
@@ -203,8 +222,7 @@ export async function updateNaturantPartially(
       data: updatedNaturant,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
