@@ -10,7 +10,28 @@ interface User {
   role: string;
 }
 
-export async function getAllUsers(req: express.Request, res: express.Response) {
+// Create a custom interface that extends express.Request
+interface CustomRequest extends express.Request {
+  userId?: number;
+}
+
+// Param middleware to parse the 'id' parameter
+export async function parseUserId(
+  req: CustomRequest,
+  res: express.Response,
+  next: express.NextFunction
+) {
+  const id = req.params.id;
+  req.userId = parseInt(id, 10); // Store the parsed ID in the request object
+  next();
+}
+
+// Controller function to get all users
+export async function getAllUsers(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) {
   try {
     // Implement code for getting all users
     const userData = await readFile("src/data/users.json", "utf-8");
@@ -21,14 +42,18 @@ export async function getAllUsers(req: express.Request, res: express.Response) {
       data: users,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
-export async function createUser(req: express.Request, res: express.Response) {
+// Controller function to create a new user
+export async function createUser(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) {
   try {
-    const newUser: User = req.body;
+    const newUser: User = req.body as User; // Type assertion
     const users = await readUserData();
 
     // Generate a unique ID for the new user
@@ -49,16 +74,26 @@ export async function createUser(req: express.Request, res: express.Response) {
       data: newUser,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
-export async function getUserById(req: express.Request, res: express.Response) {
+// Controller function to get a user by ID
+export async function getUserById(
+  req: CustomRequest,
+  res: express.Response,
+  next: express.NextFunction
+) {
   try {
-    const { id } = req.params;
+    if (req.userId === undefined) {
+      res.status(400).json({ error: "Invalid or missing user ID" });
+      return;
+    }
+
+    const userId = req.userId;
     const users = await readUserData();
-    const selectedUser = users.find((user) => user.id === parseInt(id));
+
+    const selectedUser = users.find((user) => user.id === userId);
 
     if (!selectedUser) {
       res.status(404).json({ error: "User not found" });
@@ -70,30 +105,34 @@ export async function getUserById(req: express.Request, res: express.Response) {
       data: selectedUser,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
+// Controller function to update a user by ID
 export async function updateUserById(
-  req: express.Request,
-  res: express.Response
+  req: CustomRequest,
+  res: express.Response,
+  next: express.NextFunction
 ) {
   try {
-    const { id } = req.params;
-    const updatedUser: User = req.body;
+    if (req.userId === undefined) {
+      res.status(400).json({ error: "Invalid or missing user ID" });
+      return;
+    }
+
+    const userId = req.userId;
+    const updatedUser: User = req.body as User; // Type assertion
     const users = await readUserData();
 
-    const existingUserIndex = users.findIndex(
-      (user) => user.id === parseInt(id)
-    );
+    const existingUserIndex = users.findIndex((user) => user.id === userId);
 
     if (existingUserIndex === -1) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
-    updatedUser.id = parseInt(id);
+    updatedUser.id = userId;
     users[existingUserIndex] = updatedUser;
 
     // Write the updated user data back to users.json
@@ -108,22 +147,22 @@ export async function updateUserById(
       data: updatedUser,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
+
+// Controller function to delete a user by ID
 export async function deleteUserById(
-  req: express.Request,
-  res: express.Response
+  req: CustomRequest,
+  res: express.Response,
+  next: express.NextFunction
 ) {
   try {
-    const { id } = req.params;
+    const userId = req.userId as number; // Type assertion
     const users = await readUserData();
 
-    const existingUserIndex = users.findIndex(
-      (user) => user.id === parseInt(id)
-    );
+    const existingUserIndex = users.findIndex((user) => user.id === userId);
 
     if (existingUserIndex === -1) {
       res.status(404).json({ error: "User not found" });
@@ -144,23 +183,22 @@ export async function deleteUserById(
       data: deletedUser,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
+// Controller function to partially update a user by ID
 export async function updateUserByIdPatch(
-  req: express.Request,
-  res: express.Response
+  req: CustomRequest,
+  res: express.Response,
+  next: express.NextFunction
 ) {
   try {
-    const { id } = req.params;
-    const updatedFields: Partial<User> = req.body;
+    const userId = req.userId as number; // Type assertion
+    const updatedFields: Partial<User> = req.body as Partial<User>; // Type assertion
     const users = await readUserData();
 
-    const existingUserIndex = users.findIndex(
-      (user) => user.id === parseInt(id)
-    );
+    const existingUserIndex = users.findIndex((user) => user.id === userId);
 
     if (existingUserIndex === -1) {
       res.status(404).json({ error: "User not found" });
@@ -182,8 +220,7 @@ export async function updateUserByIdPatch(
       data: updatedUser,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    next(err); // Pass the error to the error handling middleware
   }
 }
 
