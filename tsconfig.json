@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["./custom.d.ts"],
+    "types": ["./types.d.ts"],
     "target": "ESNext",
     "outDir": "./dist",
     "rootDir": "./src",
