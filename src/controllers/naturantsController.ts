@@ -20,7 +20,8 @@ export async function getAllNaturants(
     const naturantsData = await NaturantsModel.find();
     res.json({
       status: "success",
-      data: naturantsData,
+      results: naturantsData.length,
+      data: { naturantsData },
     });
   } catch (err) {
     next(err);
