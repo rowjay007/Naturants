@@ -8,7 +8,6 @@ interface UserData extends Document {
 }
 
 const userSchema = new Schema({
-  _id: { type: Schema.Types.Mixed, required: true }, // ID can be either number or string
   username: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },

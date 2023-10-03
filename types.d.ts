@@ -14,6 +14,7 @@ declare global {
   namespace Express {
     interface Request {
       naturantId: number | string;
+      userId: number | string;
       updatedUser: number;
     }
   }

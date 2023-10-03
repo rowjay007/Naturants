@@ -5,17 +5,17 @@ import {
   getUserById,
   updateUserById,
   deleteUserById,
-  updateUserByIdPatch,
+  parseUserId,
+  updateUserPartially,
 } from "../controllers/usersController";
-import { checkBody, checkID } from "../middleware/middleware";
 
 const router = express.Router();
 
 router.get("/", getAllUsers);
-router.post("/", checkBody, createUser); // Use the middleware here
-router.get("/:id", checkID, getUserById); // Use the middleware here
-router.put("/:id", checkID, updateUserById); // Use the middleware here
-router.patch("/:id", checkID, updateUserByIdPatch); // Use the middleware here
-router.delete("/:id", checkID, deleteUserById); // Use the middleware here
+router.post("/", createUser);
+router.get("/:id", parseUserId, getUserById);
+router.put("/:id", parseUserId, updateUserById);
+router.patch("/:id", parseUserId, updateUserPartially); 
+router.delete("/:id", parseUserId, deleteUserById);
 
 export default router;
