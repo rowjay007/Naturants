@@ -1,86 +1,49 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import express from "express";
-import { readFile, writeFile } from "fs/promises";
+import NaturantsModel from "../models/naturantsModel";
 
-// Define Naturant interface here
-interface Naturant {
-  id: number;
-  restaurantName: string;
-  address: string;
-  phone: string;
-  menuItems: { itemName: string; price: number }[];
-  employees: { employeeName: string; position: string }[];
-  orders: any[];
-  customers: any[];
-}
-
-// Param middleware to parse the 'id' parameter
 export async function parseNaturantId(
   req: express.Request,
   res: express.Response,
   next: express.NextFunction
 ) {
   const id = req.params.id;
-  req.naturantId = parseInt(id, 10); // Store the parsed ID in request object
+  req.naturantId = parseInt(id, 10);
   next();
 }
 
-// Controller function to get all naturants
 export async function getAllNaturants(
   req: express.Request,
   res: express.Response,
   next: express.NextFunction
 ) {
   try {
-    // Implement code for getting all naturants
-    const naturantData = await readFile(
-      "src/data/naturants-sample.json",
-      "utf-8"
-    );
-    const naturants: Naturant[] = JSON.parse(naturantData);
-
+    const naturantsData = await NaturantsModel.find();
     res.json({
       status: "success",
-      data: naturants,
+      data: naturantsData,
     });
   } catch (err) {
-    next(err); // Pass the error to the error handling middleware
+    next(err);
   }
 }
 
-// Controller function to create a new naturant
 export async function createNaturant(
   req: express.Request,
   res: express.Response,
   next: express.NextFunction
 ) {
   try {
-    const newNaturant: Naturant = req.body;
-    const naturants = await readNaturantData();
-
-    // Generate a unique ID for the new naturant
-    const maxId = Math.max(...naturants.map((naturant) => naturant.id));
-    newNaturant.id = maxId + 1;
-
-    naturants.push(newNaturant);
-
-    // Write the updated naturant data back to naturants-sample.json
-    await writeFile(
-      "src/data/naturants-sample.json",
-      JSON.stringify(naturants, null, 2),
-      "utf-8"
-    );
-
+    const newNaturant = new NaturantsModel(req.body);
+    const savedNaturant = await newNaturant.save();
     res.status(201).json({
       status: "success",
-      data: newNaturant,
+      data: savedNaturant,
     });
   } catch (err) {
-    next(err); // Pass the error to the error handling middleware
+    next(err);
   }
 }
 
-// Controller function to get a naturant by ID
 export async function getNaturantById(
   req: express.Request,
   res: express.Response,
@@ -88,11 +51,7 @@ export async function getNaturantById(
 ) {
   try {
     const { naturantId } = req;
-    const naturants = await readNaturantData();
-
-    const selectedNaturant = naturants.find(
-      (naturant) => naturant.id === naturantId
-    );
+    const selectedNaturant = await NaturantsModel.findById(naturantId);
 
     if (!selectedNaturant) {
       res.status(404).json({ error: "Naturant not found" });
@@ -104,11 +63,10 @@ export async function getNaturantById(
       data: selectedNaturant,
     });
   } catch (err) {
-    next(err); // Pass the error to the error handling middleware
+    next(err);
   }
 }
 
-// Controller function to update a naturant by ID
 export async function updateNaturantById(
   req: express.Request,
   res: express.Response,
@@ -116,38 +74,27 @@ export async function updateNaturantById(
 ) {
   try {
     const { naturantId } = req;
-    const updatedNaturant: Naturant = req.body;
-    const naturants = await readNaturantData();
-
-    const existingNaturantIndex = naturants.findIndex(
-      (naturant) => naturant.id === naturantId
+    const updatedNaturant = req.body;
+    const updatedDoc = await NaturantsModel.findByIdAndUpdate(
+      naturantId,
+      updatedNaturant,
+      { new: true }
     );
 
-    if (existingNaturantIndex === -1) {
+    if (!updatedDoc) {
       res.status(404).json({ error: "Naturant not found" });
       return;
     }
 
-    updatedNaturant.id = naturantId;
-    naturants[existingNaturantIndex] = updatedNaturant;
-
-    // Write the updated naturant data back to naturants-sample.json
-    await writeFile(
-      "src/data/naturants-sample.json",
-      JSON.stringify(naturants, null, 2),
-      "utf-8"
-    );
-
     res.json({
       status: "success",
-      data: updatedNaturant,
+      data: updatedDoc,
     });
   } catch (err) {
-    next(err); // Pass the error to the error handling middleware
+    next(err);
   }
 }
 
-// Controller function to delete a naturant by ID
 export async function deleteNaturantById(
   req: express.Request,
   res: express.Response,
@@ -155,36 +102,22 @@ export async function deleteNaturantById(
 ) {
   try {
     const { naturantId } = req;
-    const naturants = await readNaturantData();
+    const deletedNaturant = await NaturantsModel.findByIdAndRemove(naturantId);
 
-    const existingNaturantIndex = naturants.findIndex(
-      (naturant) => naturant.id === naturantId
-    );
-
-    if (existingNaturantIndex === -1) {
+    if (!deletedNaturant) {
       res.status(404).json({ error: "Naturant not found" });
       return;
     }
-
-    const deletedNaturant = naturants.splice(existingNaturantIndex, 1)[0];
-
-    // Write the updated naturant data back to naturants-sample.json
-    await writeFile(
-      "src/data/naturants-sample.json",
-      JSON.stringify(naturants, null, 2),
-      "utf-8"
-    );
 
     res.json({
       status: "success",
       data: deletedNaturant,
     });
   } catch (err) {
-    next(err); // Pass the error to the error handling middleware
+    next(err);
   }
 }
 
-// Controller function to partially update a naturant by ID
 export async function updateNaturantPartially(
   req: express.Request,
   res: express.Response,
@@ -192,44 +125,23 @@ export async function updateNaturantPartially(
 ) {
   try {
     const { naturantId } = req;
-    const updatedFields: Partial<Naturant> = req.body;
-    const naturants = await readNaturantData();
-
-    const existingNaturantIndex = naturants.findIndex(
-      (naturant) => naturant.id === naturantId
+    const updatedFields = req.body;
+    const updatedDoc = await NaturantsModel.findByIdAndUpdate(
+      naturantId,
+      { $set: updatedFields },
+      { new: true }
     );
 
-    if (existingNaturantIndex === -1) {
+    if (!updatedDoc) {
       res.status(404).json({ error: "Naturant not found" });
       return;
     }
 
-    const updatedNaturant = {
-      ...naturants[existingNaturantIndex],
-      ...updatedFields,
-    };
-    naturants[existingNaturantIndex] = updatedNaturant;
-
-    // Write the updated naturant data back to naturants-sample.json
-    await writeFile(
-      "src/data/naturants-sample.json",
-      JSON.stringify(naturants, null, 2),
-      "utf-8"
-    );
-
     res.json({
       status: "success",
-      data: updatedNaturant,
+      data: updatedDoc,
     });
   } catch (err) {
-    next(err); // Pass the error to the error handling middleware
+    next(err);
   }
-}
-
-async function readNaturantData() {
-  const naturantData = await readFile(
-    "src/data/naturants-sample.json",
-    "utf-8"
-  );
-  return JSON.parse(naturantData) as Naturant[];
 }
