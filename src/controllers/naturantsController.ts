@@ -7,7 +7,7 @@ export async function parseNaturantId(
   next: express.NextFunction
 ) {
   const id = req.params.id;
-  req.naturantId = parseInt(id, 10);
+  req.naturantId = id; 
   next();
 }
 
@@ -24,6 +24,7 @@ export async function getAllNaturants(
       data: { naturantsData },
     });
   } catch (err) {
+    console.error("Error in getAllNaturants:", err);
     next(err);
   }
 }
@@ -41,6 +42,7 @@ export async function createNaturant(
       data: savedNaturant,
     });
   } catch (err) {
+    console.error("Error in createNaturant:", err);
     next(err);
   }
 }
@@ -64,6 +66,7 @@ export async function getNaturantById(
       data: selectedNaturant,
     });
   } catch (err) {
+    console.error("Error in getNaturantById:", err);
     next(err);
   }
 }
@@ -92,6 +95,7 @@ export async function updateNaturantById(
       data: updatedDoc,
     });
   } catch (err) {
+    console.error("Error in updateNaturantById:", err);
     next(err);
   }
 }
@@ -115,6 +119,7 @@ export async function deleteNaturantById(
       data: deletedNaturant,
     });
   } catch (err) {
+    console.error("Error in deleteNaturantById:", err);
     next(err);
   }
 }
@@ -143,6 +148,7 @@ export async function updateNaturantPartially(
       data: updatedDoc,
     });
   } catch (err) {
+    console.error("Error in updateNaturantPartially:", err);
     next(err);
   }
 }

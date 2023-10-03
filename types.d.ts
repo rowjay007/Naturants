@@ -13,7 +13,7 @@ declare global {
 
   namespace Express {
     interface Request {
-      naturantId: number;
+      naturantId: number | string;
       updatedUser: number;
     }
   }
