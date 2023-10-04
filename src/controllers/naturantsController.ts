@@ -1,5 +1,3 @@
-/* eslint-disable prefer-const */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import express from "express";
 import NaturantsModel from "../models/naturantsModel";
 
@@ -19,7 +17,7 @@ export async function getAllNaturants(
   next: express.NextFunction
 ) {
   try {
-    let filter: any = {};
+    const filter: any = {};
 
     // Check if there are query parameters for filtering
     if (req.query.restaurantName) {
@@ -39,6 +37,22 @@ export async function getAllNaturants(
         ...filter["menuItems.price"],
         $lte: parseFloat(req.query.maxPrice as string),
       };
+    }
+
+    // Advanced filtering options
+    if (req.query.minRating) {
+      filter.rating = { $gte: parseFloat(req.query.minRating as string) };
+    }
+
+    if (req.query.maxRating) {
+      filter.rating = {
+        ...filter.rating,
+        $lte: parseFloat(req.query.maxRating as string),
+      };
+    }
+
+    if (req.query.hasDelivery) {
+      filter.hasDelivery = req.query.hasDelivery === "true";
     }
 
     const naturantsData = await NaturantsModel.find(filter);
@@ -106,9 +120,7 @@ export async function updateNaturantById(
     const updatedDoc = await NaturantsModel.findByIdAndUpdate(
       naturantId,
       updatedNaturant,
-      {
-        new: true,
-      }
+      { new: true }
     );
 
     if (!updatedDoc) {
@@ -161,9 +173,7 @@ export async function updateNaturantPartially(
     const updatedDoc = await NaturantsModel.findByIdAndUpdate(
       naturantId,
       { $set: updatedFields },
-      {
-        new: true,
-      }
+      { new: true }
     );
 
     if (!updatedDoc) {
