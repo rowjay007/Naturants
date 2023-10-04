@@ -51,7 +51,7 @@ export async function getAllNaturants(
 
     // Convert page and limit to numbers (default to 1 and 10 respectively)
     const pageNumber = page ? parseInt(page as string, 10) : 1;
-    const limitNumber = limit ? parseInt(limit as string, 10) : 10;
+    const limitNumber = limit ? parseInt(limit as string, 10) : 100;
 
     // Calculate the number of documents to skip
     const skip = (pageNumber - 1) * limitNumber;
@@ -81,7 +81,6 @@ export async function getAllNaturants(
     next(err);
   }
 }
-
 export async function createNaturant(
   req: express.Request,
   res: express.Response,
@@ -202,6 +201,28 @@ export async function updateNaturantPartially(
     });
   } catch (err) {
     console.error("Error in updateNaturantPartially:", err);
+    next(err);
+  }
+}
+
+export async function getTopNaturants(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) {
+  try {
+    // Retrieve the top 5 restaurants (you might need to adjust the sorting logic)
+    const topNaturantsData = await NaturantsModel.find()
+      .sort({ rating: -1 }) // Assuming you have a field named 'rating' to determine the top restaurants
+      .limit(5);
+
+    res.json({
+      status: "success",
+      results: topNaturantsData.length,
+      data: { topNaturantsData },
+    });
+  } catch (err) {
+    console.error("Error in getTopNaturants:", err);
     next(err);
   }
 }
