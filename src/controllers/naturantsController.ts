@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import express from "express";
-import { SortOrder } from "mongoose";
 import NaturantsModel from "../models/naturantsModel";
+import { SortOrder } from "mongoose";
 
 export async function parseNaturantId(
   req: express.Request,
@@ -19,8 +19,9 @@ export async function getAllNaturants(
   next: express.NextFunction
 ) {
   try {
-    // Extract query parameters for filtering and sorting
-    const { filterField, filterValue, sortField, sortOrder } = req.query;
+    // Extract query parameters for filtering, sorting, and field limiting
+    const { filterField, filterValue, sortField, sortOrder, fields } =
+      req.query;
 
     // Build the filter options
     const filterOptions: Record<string, any> = {};
@@ -34,10 +35,23 @@ export async function getAllNaturants(
       sortOptions[sortField as string] = sortOrder as SortOrder;
     }
 
+    // Build the field limiting options
+    const selectFields: string[] | undefined = Array.isArray(fields)
+      ? fields.map((field) => field.toString()) // Make sure each element is a string
+      : typeof fields === "string" // If it's a single string, convert it to an array
+      ? [fields]
+      : undefined;
+
     // Query the database with filtering and sorting options
-    const naturantsData = await NaturantsModel.find(filterOptions).sort(
-      sortOptions as any
-    );
+    let query = NaturantsModel.find(filterOptions).sort(sortOptions as any);
+
+    // Apply field limiting if selectFields is defined
+    if (selectFields) {
+      query = query.select(selectFields);
+    }
+
+    // Execute the query
+    const naturantsData = await query.exec();
 
     // Send the response
     res.json({
@@ -50,6 +64,8 @@ export async function getAllNaturants(
     next(err);
   }
 }
+
+// ... (other controller functions remain the same)
 
 export async function createNaturant(
   req: express.Request,
@@ -68,6 +84,8 @@ export async function createNaturant(
     next(err);
   }
 }
+
+// ... (other controller functions remain the same)
 
 export async function getNaturantById(
   req: express.Request,
