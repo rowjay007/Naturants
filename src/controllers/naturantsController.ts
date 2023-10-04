@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import express from "express";
-import NaturantsModel from "../models/naturantsModel";
 import { SortOrder } from "mongoose";
+import NaturantsModel from "../models/naturantsModel";
 
 export async function parseNaturantId(
   req: express.Request,
@@ -19,9 +19,16 @@ export async function getAllNaturants(
   next: express.NextFunction
 ) {
   try {
-    // Extract query parameters for filtering, sorting, and field limiting
-    const { filterField, filterValue, sortField, sortOrder, fields } =
-      req.query;
+    // Extract query parameters for filtering, sorting, field limiting, and pagination
+    const {
+      filterField,
+      filterValue,
+      sortField,
+      sortOrder,
+      fields,
+      page,
+      limit,
+    } = req.query;
 
     // Build the filter options
     const filterOptions: Record<string, any> = {};
@@ -42,8 +49,18 @@ export async function getAllNaturants(
       ? [fields]
       : undefined;
 
-    // Query the database with filtering and sorting options
-    let query = NaturantsModel.find(filterOptions).sort(sortOptions as any);
+    // Convert page and limit to numbers (default to 1 and 10 respectively)
+    const pageNumber = page ? parseInt(page as string, 10) : 1;
+    const limitNumber = limit ? parseInt(limit as string, 10) : 10;
+
+    // Calculate the number of documents to skip
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Query the database with filtering, sorting, field limiting, and pagination options
+    let query = NaturantsModel.find(filterOptions)
+      .sort(sortOptions as any)
+      .skip(skip)
+      .limit(limitNumber);
 
     // Apply field limiting if selectFields is defined
     if (selectFields) {
@@ -65,8 +82,6 @@ export async function getAllNaturants(
   }
 }
 
-// ... (other controller functions remain the same)
-
 export async function createNaturant(
   req: express.Request,
   res: express.Response,
@@ -84,8 +99,6 @@ export async function createNaturant(
     next(err);
   }
 }
-
-// ... (other controller functions remain the same)
 
 export async function getNaturantById(
   req: express.Request,
