@@ -3,7 +3,6 @@ import { Request, Response, NextFunction } from "express";
 // Custom interface extending the express Request interface
 interface CustomRequest extends Request {
   userId?: number;
-  
 }
 
 // Middleware to check if the 'id' parameter exists and is a valid number

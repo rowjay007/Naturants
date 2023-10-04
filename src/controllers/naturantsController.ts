@@ -1,3 +1,5 @@
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import express from "express";
 import NaturantsModel from "../models/naturantsModel";
 
@@ -7,7 +9,7 @@ export async function parseNaturantId(
   next: express.NextFunction
 ) {
   const id = req.params.id;
-  req.naturantId = id; 
+  req.naturantId = id; // MongoDB will handle the IDs
   next();
 }
 
@@ -17,7 +19,29 @@ export async function getAllNaturants(
   next: express.NextFunction
 ) {
   try {
-    const naturantsData = await NaturantsModel.find();
+    let filter: any = {};
+
+    // Check if there are query parameters for filtering
+    if (req.query.restaurantName) {
+      filter.restaurantName = {
+        $regex: new RegExp(req.query.restaurantName as string, "i"),
+      };
+    }
+
+    if (req.query.minPrice) {
+      filter["menuItems.price"] = {
+        $gte: parseFloat(req.query.minPrice as string),
+      };
+    }
+
+    if (req.query.maxPrice) {
+      filter["menuItems.price"] = {
+        ...filter["menuItems.price"],
+        $lte: parseFloat(req.query.maxPrice as string),
+      };
+    }
+
+    const naturantsData = await NaturantsModel.find(filter);
     res.json({
       status: "success",
       results: naturantsData.length,
@@ -82,7 +106,9 @@ export async function updateNaturantById(
     const updatedDoc = await NaturantsModel.findByIdAndUpdate(
       naturantId,
       updatedNaturant,
-      { new: true }
+      {
+        new: true,
+      }
     );
 
     if (!updatedDoc) {
@@ -135,7 +161,9 @@ export async function updateNaturantPartially(
     const updatedDoc = await NaturantsModel.findByIdAndUpdate(
       naturantId,
       { $set: updatedFields },
-      { new: true }
+      {
+        new: true,
+      }
     );
 
     if (!updatedDoc) {
