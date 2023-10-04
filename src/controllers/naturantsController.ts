@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import express from "express";
+import { SortOrder } from "mongoose";
 import NaturantsModel from "../models/naturantsModel";
 
 export async function parseNaturantId(
@@ -7,7 +9,7 @@ export async function parseNaturantId(
   next: express.NextFunction
 ) {
   const id = req.params.id;
-  req.naturantId = id; // MongoDB will handle the IDs
+  req.naturantId = id;
   next();
 }
 
@@ -17,45 +19,27 @@ export async function getAllNaturants(
   next: express.NextFunction
 ) {
   try {
-    const filter: any = {};
+    // Extract query parameters for filtering and sorting
+    const { filterField, filterValue, sortField, sortOrder } = req.query;
 
-    // Check if there are query parameters for filtering
-    if (req.query.restaurantName) {
-      filter.restaurantName = {
-        $regex: new RegExp(req.query.restaurantName as string, "i"),
-      };
+    // Build the filter options
+    const filterOptions: Record<string, any> = {};
+    if (filterField && filterValue) {
+      filterOptions[filterField as string] = filterValue;
     }
 
-    if (req.query.minPrice) {
-      filter["menuItems.price"] = {
-        $gte: parseFloat(req.query.minPrice as string),
-      };
+    // Build the sorting options
+    const sortOptions: Record<string, SortOrder> = {};
+    if (sortField && sortOrder) {
+      sortOptions[sortField as string] = sortOrder as SortOrder;
     }
 
-    if (req.query.maxPrice) {
-      filter["menuItems.price"] = {
-        ...filter["menuItems.price"],
-        $lte: parseFloat(req.query.maxPrice as string),
-      };
-    }
+    // Query the database with filtering and sorting options
+    const naturantsData = await NaturantsModel.find(filterOptions).sort(
+      sortOptions as any
+    );
 
-    // Advanced filtering options
-    if (req.query.minRating) {
-      filter.rating = { $gte: parseFloat(req.query.minRating as string) };
-    }
-
-    if (req.query.maxRating) {
-      filter.rating = {
-        ...filter.rating,
-        $lte: parseFloat(req.query.maxRating as string),
-      };
-    }
-
-    if (req.query.hasDelivery) {
-      filter.hasDelivery = req.query.hasDelivery === "true";
-    }
-
-    const naturantsData = await NaturantsModel.find(filter);
+    // Send the response
     res.json({
       status: "success",
       results: naturantsData.length,
