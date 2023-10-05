@@ -44,6 +44,7 @@ export class ApiFeatures<T extends Document> {
   private isModel(arg: any): arg is Model<T> {
     return arg instanceof Model;
   }
+
   filter(field?: string, value?: string): ApiFeatures<T> {
     if (field && value) {
       (this.query as Aggregate<Array<T | any>>).match({ [field]: value });
@@ -91,9 +92,22 @@ export class ApiFeatures<T extends Document> {
     if (fields) {
       const fieldArray = fields.split(",").map((field) => field.trim());
       const projection: Record<string, number> = {};
+
+      // Include specified fields in the projection
       fieldArray.forEach((field) => {
         projection[field] = 1;
       });
+
+      // Include virtual properties in the projection
+      const model = (this.query as any)._model;
+      if (model) {
+        model.schema.eachPath((path: string) => {
+          if (model.schema.virtuals[path]) {
+            projection[path] = 1;
+          }
+        });
+      }
+
       (this.query as Aggregate<Array<T | any>>).project(projection);
     }
     return this;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose, { Document, Schema } from "mongoose";
 
 interface MenuItem {
@@ -62,6 +63,10 @@ const naturantsSchema = new Schema({
   employees: [employeeSchema],
   orders: [orderSchema],
   customers: [customerSchema],
+});
+
+naturantsSchema.virtual("fullAddress").get(function (this: any) {
+  return `${this.address}, ${this.phone}`;
 });
 
 const NaturantsModel = mongoose.model<NaturantsData>(
