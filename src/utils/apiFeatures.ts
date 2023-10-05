@@ -1,57 +1,105 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// utils/apiFeatures.ts
+import { Document, Model, Aggregate, Query as MongooseQuery } from "mongoose";
 
-export class ApiFeatures {
-  query: any;
-  queryString: any;
+interface QueryOptions {
+  filterField?: string;
+  filterValue?: string;
+  sortField?: string;
+  sortOrder?: "asc" | "desc";
+  fields?: string;
+  page?: string;
+  limit?: string;
+  unwindField?: string;
+  projectFields?: string;
+}
 
-  constructor(query: any, queryString: any) {
-    this.query = query;
-    this.queryString = queryString;
-  }
+export class ApiFeatures<T extends Document> {
+  query: MongooseQuery<Array<T | any>, T> | Aggregate<Array<T | any>>;
 
-  filter() {
-    const queryObj = { ...this.queryString };
-    const excludedFields = ["page", "sort", "limit", "fields"];
-    excludedFields.forEach((el) => delete queryObj[el]);
-
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-
-    this.query = this.query.find(JSON.parse(queryStr));
-
-    return this;
-  }
-
-  sort() {
-    if (this.queryString.sort) {
-      const sortBy = this.queryString.sort.split(",").join(" ");
-      this.query = this.query.sort(sortBy);
+  constructor(
+    query: Model<T, {}> | MongooseQuery<Array<T | any>, T>,
+    options: QueryOptions
+  ) {
+    if (this.isModel(query)) {
+      this.query = (query as Model<T>).aggregate();
     } else {
-      this.query = this.query.sort("-createdAt");
+      this.query = query;
     }
 
-    return this;
-  }
+    this.filter(options.filterField, options.filterValue);
+    this.sort(options.sortField, options.sortOrder);
+    this.limitFields(options.fields);
+    this.paginate(options.page, options.limit);
 
-  limitFields() {
-    if (this.queryString.fields) {
-      const fields = this.queryString.fields.split(",").join(" ");
-      this.query = this.query.select(fields);
-    } else {
-      this.query = this.query.select("-__v");
+    if (options.unwindField) {
+      this.unwind(options.unwindField);
     }
 
+    if (options.projectFields) {
+      this.project(options.projectFields);
+    }
+  }
+
+  private isModel(arg: any): arg is Model<T> {
+    return arg instanceof Model;
+  }
+  filter(field?: string, value?: string): ApiFeatures<T> {
+    if (field && value) {
+      (this.query as Aggregate<Array<T | any>>).match({ [field]: value });
+    }
     return this;
   }
 
-  paginate() {
-    const page = this.queryString.page * 1 || 1;
-    const limit = this.queryString.limit * 1 || 100;
-    const skip = (page - 1) * limit;
-
-    this.query = this.query.skip(skip).limit(limit);
-
+  sort(field?: string, order?: "asc" | "desc"): ApiFeatures<T> {
+    if (field && order) {
+      (this.query as Aggregate<Array<T | any>>).sort({
+        [field]: order === "desc" ? -1 : 1,
+      });
+    }
     return this;
+  }
+
+  limitFields(fields?: string): ApiFeatures<T> {
+    if (fields) {
+      const fieldArray = fields.split(",").map((field) => field.trim());
+      (this.query as Aggregate<Array<T | any>>).project(
+        fieldArray.reduce((acc, field) => ({ ...acc, [field]: 1 }), {})
+      );
+    }
+    return this;
+  }
+
+  paginate(page?: string, limit?: string): ApiFeatures<T> {
+    const pageNumber = page ? parseInt(page, 10) : 1;
+    const limitNumber = limit ? parseInt(limit, 10) : 10;
+    const skip = (pageNumber - 1) * limitNumber;
+    (this.query as MongooseQuery<Array<T | any>, T>)
+      .skip(skip)
+      .limit(limitNumber);
+    return this;
+  }
+
+  unwind(field: string): ApiFeatures<T> {
+    if (field) {
+      (this.query as Aggregate<Array<T | any>>).unwind(field);
+    }
+    return this;
+  }
+
+  project(fields?: string): ApiFeatures<T> {
+    if (fields) {
+      const fieldArray = fields.split(",").map((field) => field.trim());
+      const projection: Record<string, number> = {};
+      fieldArray.forEach((field) => {
+        projection[field] = 1;
+      });
+      (this.query as Aggregate<Array<T | any>>).project(projection);
+    }
+    return this;
+  }
+
+  async execute(): Promise<Array<T | any>> {
+    return (this.query as MongooseQuery<Array<T | any>, T>).exec();
   }
 }
