@@ -1,4 +1,6 @@
-import mongoose, { Document, Schema } from "mongoose";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// naturantsModel.ts
+import mongoose, { Document, Query, Schema } from "mongoose";
 
 interface MenuItem {
   itemName: string;
@@ -30,7 +32,7 @@ interface NaturantsData extends Document {
   employees: Employee[];
   orders: Order[];
   customers: Customer[];
-  updatedAt?: Date; // Added for demonstration
+  updatedAt?: Date;
 }
 
 const menuItemSchema = new Schema({
@@ -63,14 +65,18 @@ const naturantsSchema = new Schema({
   employees: [employeeSchema],
   orders: [orderSchema],
   customers: [customerSchema],
-  updatedAt: { type: Date }, // Added for demonstration
+  updatedAt: { type: Date },
 });
 
 // Pre-save middleware
-naturantsSchema.pre<NaturantsData>("save", function (next) {
-  // You can perform tasks before saving the document here
-  // For example, let's update a timestamp field before saving
+naturantsSchema.pre<NaturantsData>("save", function (next: any) {
   this.updatedAt = new Date();
+  next();
+});
+
+// Query middleware
+naturantsSchema.pre<Query<any, NaturantsData>>(/^find/, function (next: any) {
+  console.log("Executing query:", this.getFilter());
   next();
 });
 
