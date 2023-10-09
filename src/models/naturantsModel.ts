@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // naturantsModel.ts
-import mongoose, { Document, Query, Schema } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 interface MenuItem {
   itemName: string;
@@ -23,6 +23,11 @@ interface Customer {
   customerName: string;
   phoneNumber: string;
 }
+
+const phoneNumberValidator = (value: string) => {
+  const phoneRegex = /^\d{10}$/;
+  return phoneRegex.test(value);
+};
 
 interface NaturantsData extends Document {
   restaurantName: string;
@@ -54,13 +59,27 @@ const orderSchema = new Schema({
 
 const customerSchema = new Schema({
   customerName: { type: String, required: true },
-  phoneNumber: { type: String, required: true },
+  phoneNumber: {
+    type: String,
+    required: true,
+    validate: {
+      validator: phoneNumberValidator,
+      message: "Invalid phone number format",
+    },
+  },
 });
 
 const naturantsSchema = new Schema({
   restaurantName: { type: String, required: true },
   address: { type: String, required: true },
-  phone: { type: String, required: true },
+  phone: {
+    type: String,
+    required: true,
+    validate: {
+      validator: phoneNumberValidator,
+      message: "Invalid phone number format",
+    },
+  },
   menuItems: [menuItemSchema],
   employees: [employeeSchema],
   orders: [orderSchema],
@@ -69,25 +88,16 @@ const naturantsSchema = new Schema({
 });
 
 // Pre-save middleware
-naturantsSchema.pre<NaturantsData>("save", function (next: any) {
+naturantsSchema.pre<NaturantsData>("save", function (next) {
   this.updatedAt = new Date();
-  next();
-});
-
-// Query middleware
-naturantsSchema.pre<Query<any, NaturantsData>>(/^find/, function (next: any) {
-  console.log("Executing query:", this.getFilter());
   next();
 });
 
 // Aggregation middleware
 naturantsSchema.pre("aggregate", function (next) {
-  // Add your aggregation middleware logic here
-  // For example, let's add a $match stage to filter out inactive documents
   this.pipeline().unshift({ $match: { isActive: { $ne: false } } });
   next();
 });
-
 
 const NaturantsModel = mongoose.model<NaturantsData>(
   "Naturants",
