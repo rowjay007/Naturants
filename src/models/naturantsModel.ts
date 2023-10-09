@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// naturantsModel.ts
 import mongoose, { Document, Schema } from "mongoose";
+import slugify from "slugify";
+import validator from "validator";
 
 interface MenuItem {
   itemName: string;
@@ -24,11 +24,6 @@ interface Customer {
   phoneNumber: string;
 }
 
-const phoneNumberValidator = (value: string) => {
-  const phoneRegex = /^\d{10}$/;
-  return phoneRegex.test(value);
-};
-
 interface NaturantsData extends Document {
   restaurantName: string;
   address: string;
@@ -37,7 +32,9 @@ interface NaturantsData extends Document {
   employees: Employee[];
   orders: Order[];
   customers: Customer[];
+  slug: string;
   updatedAt?: Date;
+  isActive?: boolean;
 }
 
 const menuItemSchema = new Schema({
@@ -63,7 +60,8 @@ const customerSchema = new Schema({
     type: String,
     required: true,
     validate: {
-      validator: phoneNumberValidator,
+      validator: (value: string) =>
+        validator.isMobilePhone(value, "any", { strictMode: false }),
       message: "Invalid phone number format",
     },
   },
@@ -76,7 +74,8 @@ const naturantsSchema = new Schema({
     type: String,
     required: true,
     validate: {
-      validator: phoneNumberValidator,
+      validator: (value: string) =>
+        validator.isMobilePhone(value, "any", { strictMode: false }),
       message: "Invalid phone number format",
     },
   },
@@ -84,12 +83,18 @@ const naturantsSchema = new Schema({
   employees: [employeeSchema],
   orders: [orderSchema],
   customers: [customerSchema],
+  slug: { type: String, unique: true },
   updatedAt: { type: Date },
+  isActive: { type: Boolean, default: true },
 });
 
 // Pre-save middleware
 naturantsSchema.pre<NaturantsData>("save", function (next) {
   this.updatedAt = new Date();
+
+  // Generate a slug from the restaurant name using 'slugify'
+  this.slug = slugify(this.restaurantName, { lower: true });
+
   next();
 });
 
