@@ -80,6 +80,15 @@ naturantsSchema.pre<Query<any, NaturantsData>>(/^find/, function (next: any) {
   next();
 });
 
+// Aggregation middleware
+naturantsSchema.pre("aggregate", function (next) {
+  // Add your aggregation middleware logic here
+  // For example, let's add a $match stage to filter out inactive documents
+  this.pipeline().unshift({ $match: { isActive: { $ne: false } } });
+  next();
+});
+
+
 const NaturantsModel = mongoose.model<NaturantsData>(
   "Naturants",
   naturantsSchema
