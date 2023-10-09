@@ -32,8 +32,8 @@ interface NaturantsData extends Document {
   employees: Employee[];
   orders: Order[];
   customers: Customer[];
-  slug: string;
   updatedAt?: Date;
+  slug?: string;
   isActive?: boolean;
 }
 
@@ -62,7 +62,8 @@ const customerSchema = new Schema({
     validate: {
       validator: (value: string) =>
         validator.isMobilePhone(value, "any", { strictMode: false }),
-      message: "Invalid phone number format",
+      message:
+        "Invalid phone number format. Use a valid phone number with country code.",
     },
   },
 });
@@ -76,7 +77,8 @@ const naturantsSchema = new Schema({
     validate: {
       validator: (value: string) =>
         validator.isMobilePhone(value, "any", { strictMode: false }),
-      message: "Invalid phone number format",
+      message:
+        "Invalid phone number format. Use a valid phone number with country code.",
     },
   },
   menuItems: [menuItemSchema],
@@ -91,10 +93,7 @@ const naturantsSchema = new Schema({
 // Pre-save middleware
 naturantsSchema.pre<NaturantsData>("save", function (next) {
   this.updatedAt = new Date();
-
-  // Generate a slug from the restaurant name using 'slugify'
   this.slug = slugify(this.restaurantName, { lower: true });
-
   next();
 });
 
