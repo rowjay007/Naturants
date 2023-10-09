@@ -1,6 +1,10 @@
-import mongoose, { Document, Schema } from "mongoose";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// naturantsModel.ts
+
+import mongoose, { Schema, Document } from "mongoose";
 import slugify from "slugify";
 import validator from "validator";
+import { ValidationError } from "../utils/appError";
 
 interface MenuItem {
   itemName: string;
@@ -32,8 +36,8 @@ interface NaturantsData extends Document {
   employees: Employee[];
   orders: Order[];
   customers: Customer[];
-  updatedAt?: Date;
   slug?: string;
+  updatedAt?: Date;
   isActive?: boolean;
 }
 
@@ -62,8 +66,7 @@ const customerSchema = new Schema({
     validate: {
       validator: (value: string) =>
         validator.isMobilePhone(value, "any", { strictMode: false }),
-      message:
-        "Invalid phone number format. Use a valid phone number with country code.",
+      message: "Invalid phone number format. Use a valid phone number.",
     },
   },
 });
@@ -77,8 +80,7 @@ const naturantsSchema = new Schema({
     validate: {
       validator: (value: string) =>
         validator.isMobilePhone(value, "any", { strictMode: false }),
-      message:
-        "Invalid phone number format. Use a valid phone number with country code.",
+      message: "Invalid phone number format. Use a valid phone number.",
     },
   },
   menuItems: [menuItemSchema],
@@ -102,6 +104,30 @@ naturantsSchema.pre("aggregate", function (next) {
   this.pipeline().unshift({ $match: { isActive: { $ne: false } } });
   next();
 });
+
+// Query middleware to handle validation errors
+naturantsSchema.post(
+  "find",
+  function (error: any, res: any, next: (arg0: any) => void) {
+    if (error.name === "ValidationError") {
+      next(new ValidationError(error.message));
+    } else {
+      next(error);
+    }
+  }
+);
+
+// Custom error handling middleware
+naturantsSchema.post(
+  "save",
+  function (error: any, doc: NaturantsData, next: (arg0: any) => void) {
+    if (error.name === "ValidationError") {
+      next(new ValidationError(error.message));
+    } else {
+      next(error);
+    }
+  }
+);
 
 const NaturantsModel = mongoose.model<NaturantsData>(
   "Naturants",

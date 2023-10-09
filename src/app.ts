@@ -1,11 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// app.ts
+
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
 import morgan from "morgan";
 import naturantsRoutes from "./routes/naturantsRoutes";
 import usersRoutes from "./routes/usersRoutes";
+import { AppError } from "./utils/appError";
 
 dotenv.config();
 
@@ -34,20 +37,14 @@ app.use(cors());
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/naturants", naturantsRoutes);
 
-// Catch-all route for unhandled routes
-app.all("*", (req: Request, res: Response) => {
-  res
-    .status(404)
-    .json({ status: "Failed", message: `Cannot find ${req.originalUrl} on this server` });
-});
-
-// Custom error handling middleware
 // Custom error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error(err);
-  res.status(500).json({ error: "Internal Server Error", details: err.message });
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({ error: err.message });
+  } else {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
-
 export { app, port };
- 
