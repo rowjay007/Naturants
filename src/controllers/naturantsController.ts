@@ -168,15 +168,19 @@ export async function getTopNaturants(
   next: express.NextFunction
 ) {
   try {
-    const topNaturantsData = await NaturantsModel.find()
-      .sort({ rating: -1 })
-      .limit(5);
+    if (req.params.id === "top") {
+      const topNaturantsData = await NaturantsModel.find()
+        .sort({ rating: -1 })
+        .limit(5);
 
-    res.json({
-      status: "success",
-      results: topNaturantsData.length,
-      data: { topNaturantsData },
-    });
+      return res.json({
+        status: "success",
+        results: topNaturantsData.length,
+        data: { topNaturantsData },
+      });
+    }
+
+    res.status(400).json({ error: "Invalid parameter" });
   } catch (err) {
     console.error("Error in getTopNaturants:", err);
     next(err);

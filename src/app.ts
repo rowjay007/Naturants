@@ -34,10 +34,19 @@ app.use(cors());
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/naturants", naturantsRoutes);
 
+// Catch-all route for unhandled routes
+app.all("*", (req: Request, res: Response) => {
+  res
+    .status(404)
+    .json({ status: "Failed", message: `Cannot find ${req.originalUrl} on this server` });
+});
+
+// Custom error handling middleware
 // Custom error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
-  res.status(500).json({ error: "Internal Server Error" });
+  res.status(500).json({ error: "Internal Server Error", details: err.message });
 });
+
 
 export { app, port };
