@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app.ts
-
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
 import morgan from "morgan";
+import {
+  globalErrorHandler,
+  handleValidationErrors,
+} from "./controllers/errorController";
 import naturantsRoutes from "./routes/naturantsRoutes";
 import usersRoutes from "./routes/usersRoutes";
-import { AppError } from "./utils/appError";
 
 dotenv.config();
 
@@ -38,13 +39,7 @@ app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/naturants", naturantsRoutes);
 
 // Custom error handling middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: err.message });
-  } else {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+app.use(handleValidationErrors);
+app.use(globalErrorHandler);
 
 export { app, port };
