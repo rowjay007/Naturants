@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
+import jwt, { TokenExpiredError } from "jsonwebtoken";
 import { AppError, ValidationError } from "../utils/appError";
 
 // Handle validation errors 🚫
@@ -37,8 +38,12 @@ const handleCastError = (): AppError => {
 };
 
 // Handle JWT errors 🚫
-const handleJWTError = (): AppError => {
-  return new AppError("Invalid token. Please log in again.", 401);
+const handleJWTError = (err: jwt.JsonWebTokenError): AppError => {
+  if (err instanceof jwt.TokenExpiredError) {
+    return new AppError("Token has expired. Please log in again.", 401);
+  } else {
+    return new AppError("Invalid token. Please log in again.", 401);
+  }
 };
 
 // Handle operational errors during development 🚧
@@ -78,8 +83,11 @@ export const handleError = (
       error = handleMongoValidationError(err);
     } else if (err.name === "CastError") {
       error = handleCastError();
-    } else if (err.name === "JsonWebTokenError") {
-      error = handleJWTError();
+    } else if (
+      err.name === "JsonWebTokenError" ||
+      err instanceof TokenExpiredError
+    ) {
+      error = handleJWTError(err);
     } else {
       error = new AppError("Something went wrong", 500);
     }
