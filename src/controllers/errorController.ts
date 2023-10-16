@@ -1,3 +1,5 @@
+// errorController.ts
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
@@ -32,6 +34,11 @@ const handleMongoValidationError = (err: any): AppError => {
 const handleCastError = (): AppError => {
   const message = "Invalid resource ID";
   return new AppError(message, 400);
+};
+
+// Handle JWT errors 🚫
+const handleJWTError = (): AppError => {
+  return new AppError("Invalid token. Please log in again.", 401);
 };
 
 // Handle operational errors during development 🚧
@@ -71,6 +78,8 @@ export const handleError = (
       error = handleMongoValidationError(err);
     } else if (err.name === "CastError") {
       error = handleCastError();
+    } else if (err.name === "JsonWebTokenError") {
+      error = handleJWTError();
     } else {
       error = new AppError("Something went wrong", 500);
     }

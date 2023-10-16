@@ -7,7 +7,7 @@ export async function parseUserId(
   next: express.NextFunction
 ) {
   const id = req.params.id;
-  req.userId = id,
+  req.userId = id;
   next();
 }
 
@@ -126,7 +126,6 @@ export async function updateUserPartially(
     next(err);
   }
 }
-
 
 export async function deleteUserById(
   req: express.Request,
