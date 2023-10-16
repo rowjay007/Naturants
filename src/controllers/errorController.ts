@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// errorController.ts
-
 import { NextFunction, Request, Response } from "express";
 import { AppError, ValidationError } from "../utils/appError";
 
@@ -17,7 +15,9 @@ export const handleValidationErrors = (
 
 // Handle MongoDB duplicate key errors 🔄
 const handleDuplicateKeyError = (err: any): AppError => {
-  const message = `Duplicate field value: ${err.keyValue}`;
+  const keyValueMatch = err.message.match(/(["'])(?:(?=(\\?))\2.)*?\1/);
+  const key = keyValueMatch ? keyValueMatch[0] : "unknown";
+  const message = `Duplicate field value: ${key}`;
   return new AppError(message, 400);
 };
 
@@ -36,6 +36,7 @@ const handleCastError = (): AppError => {
 
 // Handle operational errors during development 🚧
 const handleDevErrors = (err: any, res: Response): void => {
+  console.error("🚧 [Development Error]:", err);
   res.status(err.statusCode).json({
     error: err,
     message: err.message,
@@ -48,7 +49,7 @@ const handleProdErrors = (err: AppError, res: Response): void => {
   if (err.isOperational) {
     res.status(err.statusCode).json({ error: err.message });
   } else {
-    console.error("ERROR:", err);
+    console.error("🚨 [ERROR]:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
