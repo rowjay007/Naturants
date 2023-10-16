@@ -1,3 +1,5 @@
+// appError.ts
+
 class AppError extends Error {
   statusCode: number;
   isOperational: boolean;

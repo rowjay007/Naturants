@@ -3,6 +3,7 @@
 import express from "express";
 import NaturantsModel from "../models/naturantsModel";
 import { ApiFeatures } from "../utils/apiFeatures";
+import { AppError } from "../utils/appError";
 import { catchAsync } from "../utils/catchAsync";
 
 export const parseNaturantId = catchAsync(
@@ -47,8 +48,7 @@ export const getNaturantById = catchAsync(async (req, res, next) => {
   const selectedNaturant = await NaturantsModel.findById(naturantId);
 
   if (!selectedNaturant) {
-    res.status(404).json({ error: "Naturant not found" });
-    return;
+    throw new AppError("Naturant not found", 404);
   }
 
   res.json({
@@ -69,8 +69,7 @@ export const updateNaturantById = catchAsync(async (req, res, next) => {
   );
 
   if (!updatedDoc) {
-    res.status(404).json({ error: "Naturant not found" });
-    return;
+    throw new AppError("Naturant not found", 404);
   }
 
   res.json({
@@ -84,8 +83,7 @@ export const deleteNaturantById = catchAsync(async (req, res, next) => {
   const deletedNaturant = await NaturantsModel.findByIdAndRemove(naturantId);
 
   if (!deletedNaturant) {
-    res.status(404).json({ error: "Naturant not found" });
-    return;
+    throw new AppError("Naturant not found", 404);
   }
 
   res.json({
@@ -104,8 +102,7 @@ export const updateNaturantPartially = catchAsync(async (req, res, next) => {
   );
 
   if (!updatedDoc) {
-    res.status(404).json({ error: "Naturant not found" });
-    return;
+    throw new AppError("Naturant not found", 404);
   }
 
   res.json({
@@ -131,7 +128,25 @@ export const getTopNaturants = catchAsync(
         data: { topNaturantsData },
       });
     } else {
-      res.status(400).json({ error: "Invalid parameter" });
+      throw new AppError("Invalid parameter", 400);
     }
   }
 );
+
+// Middleware for handling undefined routes
+export const handleUndefinedRoutes = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
+  next(new AppError(`Route not found: ${req.originalUrl}`, 404, true));
+};
+
+export const undefinedRouteMiddleware = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
+  const error = new AppError(`Route not found: ${req.originalUrl}`, 404, true);
+  next(error);
+};

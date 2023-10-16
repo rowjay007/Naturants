@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// errorController.ts
+
 import { NextFunction, Request, Response } from "express";
 import { AppError, ValidationError } from "../utils/appError";
 
-// Handle validation errors
+// Handle validation errors 🚫
 export const handleValidationErrors = (
   err: ValidationError,
   req: Request,
@@ -13,26 +15,26 @@ export const handleValidationErrors = (
   res.status(err.statusCode).json({ error: err.message });
 };
 
-// Handle MongoDB duplicate key errors
+// Handle MongoDB duplicate key errors 🔄
 const handleDuplicateKeyError = (err: any): AppError => {
   const message = `Duplicate field value: ${err.keyValue}`;
   return new AppError(message, 400);
 };
 
-// Handle MongoDB validation errors
+// Handle MongoDB validation errors 🔍
 const handleMongoValidationError = (err: any): AppError => {
   const errors = Object.values(err.errors).map((el: any) => el.message);
   const message = `Invalid input data. ${errors.join(". ")}`;
   return new AppError(message, 400);
 };
 
-// Handle MongoDB CastError (invalid ObjectId)
+// Handle MongoDB CastError (invalid ObjectId) 🆘
 const handleCastError = (): AppError => {
   const message = "Invalid resource ID";
   return new AppError(message, 400);
 };
 
-// Handle operational errors during development
+// Handle operational errors during development 🚧
 const handleDevErrors = (err: any, res: Response): void => {
   res.status(err.statusCode).json({
     error: err,
@@ -41,7 +43,7 @@ const handleDevErrors = (err: any, res: Response): void => {
   });
 };
 
-// Handle operational errors during production
+// Handle operational errors during production 🚨
 const handleProdErrors = (err: AppError, res: Response): void => {
   if (err.isOperational) {
     res.status(err.statusCode).json({ error: err.message });
