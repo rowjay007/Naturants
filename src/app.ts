@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
@@ -33,8 +33,9 @@ app.use(
 
 app.use(cors());
 
-app.use("/api/v1/users", protect, usersRoutes); // Protect this route
-app.use("/api/v1/naturants", protect, naturantsRoutes); // Protect this route
+// Protect these routes
+app.use("/api/v1/users", usersRoutes);
+app.use("/api/v1/naturants", protect, naturantsRoutes);
 
 // Custom error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

@@ -1,3 +1,5 @@
+// routes/usersRoutes.ts
+
 import express from "express";
 import {
   getAllUsers,
@@ -8,15 +10,26 @@ import {
   parseUserId,
   updateUserPartially,
 } from "../controllers/usersController";
-import { protect } from "../middleware/authMiddleware";
+import {
+  signup,
+  login,
+  forgotPassword,
+  resetPassword,
+} from "../controllers/authController";
 
 const router = express.Router();
 
-router.get("/", protect, getAllUsers); // Secure this route with authentication
+router.get("/", getAllUsers);
 router.post("/", createUser);
-router.get("/:id", parseUserId, protect, getUserById); // Secure this route with authentication
-router.put("/:id", parseUserId, protect, updateUserById); // Secure this route with authentication
-router.patch("/:id", parseUserId, protect, updateUserPartially); // Secure this route with authentication
-router.delete("/:id", parseUserId, protect, deleteUserById); // Secure this route with authentication
+router.get("/:id", parseUserId, getUserById);
+router.put("/:id", parseUserId, updateUserById);
+router.patch("/:id", parseUserId, updateUserPartially);
+router.delete("/:id", parseUserId, deleteUserById);
+
+// Auth routes
+router.post("/signup", signup);
+router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.patch("/reset-password/:token", resetPassword);
 
 export default router;
