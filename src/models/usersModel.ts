@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcrypt";
 import mongoose, { Document, Model, Schema } from "mongoose";
+import validator from "validator";
 
 interface UserData extends Document {
   username: string;
   email: string;
   password: string;
   role: string;
+  photo?: string; // Add photo field
   passwordConfirm?: string;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
@@ -19,12 +21,21 @@ interface UserModel extends Model<UserData> {
   hashPasswordResetToken: (token: string) => string;
 }
 
+const validRoles = ["user", "waiter", "customer", "chef", "manager", "admin"];
+
 const userSchema = new Schema<UserData>(
   {
     username: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      validate: [validator.isEmail, "Invalid email"],
+    },
     password: { type: String, required: true },
-    role: { type: String, required: true },
+    role: { type: String, required: true, enum: validRoles, default: "user" },
+    photo: String, // Add the photo field
     passwordConfirm: String,
     passwordResetToken: String,
     passwordResetExpires: Date,
