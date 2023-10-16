@@ -1,12 +1,13 @@
-import mongoose, { Document, Schema, Model } from "mongoose";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcrypt";
+import mongoose, { Document, Model, Schema } from "mongoose";
 
 interface UserData extends Document {
   username: string;
   email: string;
   password: string;
   role: string;
-  passwordConfirm?: string; // Add this line
+  passwordConfirm?: string;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
   changedPasswordAt?: Date;
@@ -24,7 +25,7 @@ const userSchema = new Schema<UserData>(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, required: true },
-    passwordConfirm: String, // Add this line
+    passwordConfirm: String,
     passwordResetToken: String,
     passwordResetExpires: Date,
     changedPasswordAt: Date,
@@ -50,6 +51,15 @@ userSchema.statics.hashPasswordResetToken = function (token: string): string {
 userSchema.pre<UserData>("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();
   this.changedPasswordAt = new Date();
+  next();
+});
+
+userSchema.pre("findOneAndUpdate", function (next) {
+  const update: any = this.getUpdate();
+  if (update?.$set?.password) {
+    update.$set.changedPasswordAt = new Date();
+  }
+
   next();
 });
 
