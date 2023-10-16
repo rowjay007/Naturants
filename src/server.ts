@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { app } from "./app";
 
-dotenv.config(); // Load environment variables from .env file
+dotenv.config();
 
 const mongoUri = process.env.MONGO_URI?.replace(
   "<PASSWORD>",
@@ -13,21 +13,28 @@ const env = process.env.NODE_ENV || "development";
 const serverPort =
   env === "production" ? process.env.PROD_PORT : process.env.DEV_PORT;
 
-// Define mongoose options with type assertion
 const mongooseOptions = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 } as mongoose.ConnectOptions;
 
-// Connect to MongoDB using Mongoose
 mongoose
   .connect(mongoUri || "", mongooseOptions)
   .then(() => {
-    console.log("Connected to MongoDB");
+    console.log("✅ Connected to MongoDB");
     app.listen(serverPort, () => {
-      console.log(`Server is listening on port ${serverPort}`);
+      console.log(`🚀 Server is listening on port ${serverPort}`);
     });
   })
   .catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
+    console.error("❌ Error connecting to MongoDB:", error);
   });
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("🔥 Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("💥 Uncaught Exception:", error);
+  process.exit(1);
+});
