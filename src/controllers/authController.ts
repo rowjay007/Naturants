@@ -12,6 +12,16 @@ const signToken = (userId: string): string => {
   });
 };
 
+export const restrictTo = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    // Check if the current user's role is allowed
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError("Permission denied", 403));
+    }
+    next();
+  };
+};
+
 export const signup = async (
   req: Request,
   res: Response,
@@ -112,7 +122,7 @@ export const forgotPassword = async (
     }
 
     // Generate a reset token
-    const resetToken = user.createPasswordResetToken();
+    const resetToken: string = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
     // Send the reset token via email (You need to implement this)
@@ -166,6 +176,29 @@ export const resetPassword = async (
     });
   } catch (error) {
     console.error("Error in resetPassword:", error);
+    next(error);
+  }
+};
+
+// Example usage of restrictTo middleware
+export const deleteProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Assuming user information is stored in req.user
+    const user = req.user;
+
+    // Delete the user profile
+    await UserModel.findByIdAndDelete(user._id);
+
+    res.status(204).json({
+      status: "success",
+      data: null,
+    });
+  } catch (error) {
+    console.error("Error in deleteProfile:", error);
     next(error);
   }
 };
