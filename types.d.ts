@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // types.d.ts
 
 declare global {
@@ -16,6 +17,12 @@ declare global {
       naturantId: number | string;
       userId: number | string;
       updatedUser: number;
+    }
+  }
+
+  namespace Express {
+    interface Request {
+      user?: any;
     }
   }
 }

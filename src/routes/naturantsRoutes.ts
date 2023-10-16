@@ -2,6 +2,7 @@
 
 import express from "express";
 import * as NaturantController from "../controllers/naturantsController";
+import { protect } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
@@ -14,8 +15,10 @@ const {
   updateNaturantPartially,
   parseNaturantId,
   getTopNaturants,
-  handleUndefinedRoutes,
 } = NaturantController;
+
+// Use the protect middleware to protect the routes
+router.use(protect);
 
 router.get("/", getAllNaturants);
 router.post("/", createNaturant);
@@ -26,8 +29,5 @@ router.delete("/:id", parseNaturantId, deleteNaturantById);
 
 // Alias route for top naturants
 router.get("/top", getTopNaturants);
-
-// Handle undefined routes
-router.use(handleUndefinedRoutes);
 
 export default router;
