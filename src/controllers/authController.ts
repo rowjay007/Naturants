@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/usersModel";
 import { AppError } from "../utils/appError";
+import { catchAsync } from "../utils/catchAsync";
+import { sendEmail } from "../utils/email";
 
 const signToken = (userId: string): string => {
   return jwt.sign({ userId }, process.env.JWT_SECRET || "", {
@@ -12,9 +15,21 @@ const signToken = (userId: string): string => {
   });
 };
 
+const createSendToken = (
+  user: any,
+  statusCode: number,
+  res: Response
+): void => {
+  const token = signToken(user._id);
+
+  res.status(statusCode).json({
+    status: "success",
+    data: { user, token },
+  });
+};
+
 export const restrictTo = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    // Check if the current user's role is allowed
     if (!roles.includes(req.user.role)) {
       return next(new AppError("Permission denied", 403));
     }
@@ -22,30 +37,22 @@ export const restrictTo = (...roles: string[]) => {
   };
 };
 
-export const signup = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
+export const signup = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { username, email, password, passwordConfirm, role } = req.body;
 
-    // Check if the password and confirmPassword match
     if (password !== passwordConfirm) {
       throw new AppError("Passwords do not match", 400);
     }
 
-    // Check if the user already exists
     const existingUser = await UserModel.findOne({ username });
 
     if (existingUser) {
       throw new AppError("Username is already taken", 400);
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create a new user with the specified role
     const newUser = await UserModel.create({
       username,
       email,
@@ -53,102 +60,76 @@ export const signup = async (
       role,
     });
 
-    // Generate a token for the newly signed up user
-    const token = signToken(newUser._id);
-
-    res.status(201).json({
-      status: "success",
-      data: { user: newUser, token },
-    });
-  } catch (error: any) {
-    if (error.name === "ValidationError" && error.errors.password) {
-      // Handling the specific case where password confirmation fails
-      return next(new AppError(error.errors.password.message, 400));
-    }
-
-    console.error("Error in signup:", error);
-    next(error);
+    createSendToken(newUser, 201, res);
   }
-};
+);
 
-export const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
+export const login = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { username, password } = req.body;
 
-    // Check if the user exists
     const user = await UserModel.findOne({ username });
 
-    if (!user) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new AppError("Invalid username or password", 401);
     }
 
-    // Check if the password is correct
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordCorrect) {
-      throw new AppError("Invalid username or password", 401);
-    }
-
-    // Generate a token for the logged-in user
-    const token = signToken(user._id);
-
-    res.status(200).json({
-      status: "success",
-      data: { token },
-    });
-  } catch (error) {
-    console.error("Error in login:", error);
-    next(error);
+    createSendToken(user, 200, res);
   }
-};
+);
 
-export const forgotPassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
+export const forgotPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { email } = req.body;
 
-    // Find user by email
     const user = await UserModel.findOne({ email });
 
     if (!user) {
       throw new AppError("User not found with this email address", 404);
     }
 
-    // Generate a reset token
-    const resetToken: string = user.createPasswordResetToken();
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.passwordResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save({ validateBeforeSave: false });
 
-    // Send the reset token via email (You need to implement this)
+    const resetURL = `${req.protocol}://${req.get(
+      "host"
+    )}/api/v1/users/reset-password/${resetToken}`;
+
+    const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.`;
+
+    await sendEmail({
+      email: user.email,
+      subject: "Your password reset token (valid for 10 minutes)",
+      message,
+    });
 
     res.status(200).json({
       status: "success",
       message: "Token sent to email",
     });
-  } catch (error) {
-    console.error("Error in forgotPassword:", error);
-    next(error);
   }
-};
+);
 
-export const resetPassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
+export const resetPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { token, password, confirmPassword } = req.body;
 
-    const hashedToken = UserModel.hashPasswordResetToken(token);
+    if (!token) {
+      throw new AppError("Token is required for password reset", 400);
+    }
+
+    const hashedTokenProvided = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
 
     const user = await UserModel.findOne({
-      passwordResetToken: hashedToken,
+      passwordResetToken: hashedTokenProvided,
       passwordResetExpires: { $gt: new Date() },
     });
 
@@ -160,45 +141,25 @@ export const resetPassword = async (
       throw new AppError("Passwords do not match", 400);
     }
 
-    // Set new password
     user.password = password;
     user.passwordConfirm = confirmPassword;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
 
-    // Generate a new token
-    const newToken = signToken(user._id);
-
-    res.status(200).json({
-      status: "success",
-      data: { token: newToken },
-    });
-  } catch (error) {
-    console.error("Error in resetPassword:", error);
-    next(error);
+    createSendToken(user, 200, res);
   }
-};
+);
 
-// Example usage of restrictTo middleware
-export const deleteProfile = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    // Assuming user information is stored in req.user
+export const deleteProfile = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const user = req.user;
 
-    // Delete the user profile
     await UserModel.findByIdAndDelete(user._id);
 
     res.status(204).json({
       status: "success",
       data: null,
     });
-  } catch (error) {
-    console.error("Error in deleteProfile:", error);
-    next(error);
   }
-};
+);

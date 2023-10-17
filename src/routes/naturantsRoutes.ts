@@ -1,8 +1,9 @@
 // routes/naturantsRoutes.ts
 
 import express from "express";
+import { restrictTo } from "../controllers/authController";
 import * as NaturantController from "../controllers/naturantsController";
-import { protect, restrictTo } from "../middleware/authMiddleware";
+import { protect } from "../middleware/authMiddleware";
 
 const router = express.Router();
 

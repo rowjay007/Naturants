@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import mongoose, { Document, Model, Schema } from "mongoose";
 import validator from "validator";
 
@@ -8,7 +9,7 @@ interface UserData extends Document {
   email: string;
   password: string;
   role: string;
-  photo?: string; // Add photo field
+  photo?: string;
   passwordConfirm?: string;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
@@ -19,6 +20,10 @@ interface UserData extends Document {
 
 interface UserModel extends Model<UserData> {
   hashPasswordResetToken: (token: string) => string;
+  comparePasswordResetToken: (
+    inputToken: string,
+    hashedToken: string
+  ) => boolean;
 }
 
 const validRoles = ["user", "waiter", "customer", "chef", "manager", "admin"];
@@ -35,7 +40,7 @@ const userSchema = new Schema<UserData>(
     },
     password: { type: String, required: true },
     role: { type: String, required: true, enum: validRoles, default: "user" },
-    photo: String, // Add the photo field
+    photo: String,
     passwordConfirm: String,
     passwordResetToken: String,
     passwordResetExpires: Date,
@@ -48,19 +53,26 @@ const userSchema = new Schema<UserData>(
 );
 
 userSchema.methods.createPasswordResetToken = function (): string {
-  const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
-  this.passwordResetToken = bcrypt.hashSync(resetToken, 12);
-  this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // Token expires in 10 minutes
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  this.passwordResetToken = resetToken;
+  this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
   return resetToken;
 };
 
 userSchema.statics.hashPasswordResetToken = function (token: string): string {
-  return bcrypt.hashSync(token, 12);
+  return crypto.createHash("sha256").update(token).digest("hex");
 };
 
-// Middleware to handle password changes
-userSchema.pre<UserData>("save", function (next) {
+userSchema.statics.comparePasswordResetToken = function (
+  inputToken: string,
+  hashedToken: string
+): boolean {
+  return bcrypt.compareSync(inputToken, hashedToken);
+};
+
+userSchema.pre<UserData>("save", async function (next) {
   if (!this.isModified("password") || this.isNew) return next();
+  this.password = await bcrypt.hash(this.password, 12);
   this.changedPasswordAt = new Date();
   next();
 });
