@@ -16,6 +16,7 @@ interface UserData extends Document {
   changedPasswordAt?: Date;
 
   createPasswordResetToken: () => string;
+  comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
 
 interface UserModel extends Model<UserData> {
@@ -68,6 +69,12 @@ userSchema.statics.comparePasswordResetToken = function (
   hashedToken: string
 ): boolean {
   return bcrypt.compareSync(inputToken, hashedToken);
+};
+
+userSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 userSchema.pre<UserData>("save", async function (next) {
