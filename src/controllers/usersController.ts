@@ -1,82 +1,112 @@
-import express from "express";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { NextFunction, Request, Response } from "express";
 import UsersModel from "../models/usersModel";
+import { AppError } from "../utils/appError";
+import { catchAsync } from "../utils/catchAsync";
 
-export async function parseUserId(
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) {
-  const id = req.params.id;
-  req.userId = id;
+export const updateCurrentUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { username, email } = req.body;
+
+    const user = await UsersModel.findByIdAndUpdate(
+      req.user._id,
+      { username, email },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  }
+);
+export const deleteCurrentUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const userId = req.user._id; // Use req.user._id
+
+    console.log("Deleting user with ID:", userId);
+
+    // Delete the user
+    const deletedUser = await UsersModel.findByIdAndRemove(userId);
+
+    if (!deletedUser) {
+      return next(new AppError("User not found", 404));
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: deletedUser,
+    });
+  }
+);
+
+
+export const parseUserId = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const { id } = req.params;
+  const userId = id || (req.user && req.user._id);
+
+  console.log("ID from params:", id);
+  console.log("UserID from user:", req.user && req.user._id);
+
+  if (!userId) {
+    return next(new AppError("User ID not provided", 400));
+  }
+
+  req.userId = userId;
   next();
-}
+};
 
-export async function getAllUsers(
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) {
-  try {
+
+export const getAllUsers = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const usersData = await UsersModel.find();
     res.json({
       status: "success",
       results: usersData.length,
       data: { usersData },
     });
-  } catch (err) {
-    console.error("Error in getAllUsers:", err);
-    next(err);
   }
-}
+);
 
-export async function createUser(
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) {
-  try {
+export const createUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const newUser = new UsersModel(req.body);
     const savedUser = await newUser.save();
     res.status(201).json({
       status: "success",
       data: savedUser,
     });
-  } catch (err) {
-    console.error("Error in createUser:", err);
-    next(err);
   }
-}
+);
 
-export async function getUserById(
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) {
-  try {
+export const getUserById = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { userId } = req;
     const selectedUser = await UsersModel.findById(userId);
 
     if (!selectedUser) {
-      res.status(404).json({ error: "User not found" });
-      return;
+      return next(new AppError("User not found", 404));
     }
 
     res.json({
       status: "success",
       data: selectedUser,
     });
-  } catch (err) {
-    console.error("Error in getUserById:", err);
-    next(err);
   }
-}
+);
 
-export async function updateUserById(
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) {
-  try {
+export const updateUserById = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { userId } = req;
     const updatedUser = req.body;
     const updatedDoc = await UsersModel.findByIdAndUpdate(userId, updatedUser, {
@@ -84,26 +114,18 @@ export async function updateUserById(
     });
 
     if (!updatedDoc) {
-      res.status(404).json({ error: "User not found" });
-      return;
+      return next(new AppError("User not found", 404));
     }
 
     res.json({
       status: "success",
       data: updatedDoc,
     });
-  } catch (err) {
-    console.error("Error in updateUserById:", err);
-    next(err);
   }
-}
+);
 
-export async function updateUserPartially(
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) {
-  try {
+export const updateUserPartially = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { userId } = req;
     const updatedFields = req.body;
     const updatedDoc = await UsersModel.findByIdAndUpdate(
@@ -113,40 +135,28 @@ export async function updateUserPartially(
     );
 
     if (!updatedDoc) {
-      res.status(404).json({ error: "User not found" });
-      return;
+      return next(new AppError("User not found", 404));
     }
 
     res.json({
       status: "success",
       data: updatedDoc,
     });
-  } catch (err) {
-    console.error("Error in updateUserPartially:", err);
-    next(err);
   }
-}
+);
 
-export async function deleteUserById(
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) {
-  try {
+export const deleteUserById = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { userId } = req;
     const deletedUser = await UsersModel.findByIdAndRemove(userId);
 
     if (!deletedUser) {
-      res.status(404).json({ error: "User not found" });
-      return;
+      return next(new AppError("User not found", 404));
     }
 
     res.json({
       status: "success",
       data: deletedUser,
     });
-  } catch (err) {
-    console.error("Error in deleteUserById:", err);
-    next(err);
   }
-}
+);

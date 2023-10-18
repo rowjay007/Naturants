@@ -1,30 +1,24 @@
-// routes/usersRoutes.ts
-
 import express from "express";
 import {
-  getAllUsers,
-  createUser,
-  getUserById,
-  updateUserById,
-  deleteUserById,
-  parseUserId,
-} from "../controllers/usersController";
-import {
-  signup,
-  login,
   forgotPassword,
-  resetPassword,
+  login,
   protect,
+  resetPassword,
+  signup,
   updatePassword,
 } from "../controllers/authController";
+import {
+  createUser,
+  deleteCurrentUser,
+  deleteUserById,
+  getAllUsers,
+  getUserById,
+  parseUserId,
+  updateCurrentUser,
+  updateUserById,
+} from "../controllers/usersController";
 
 const router = express.Router();
-
-router.get("/", getAllUsers);
-router.post("/", createUser);
-router.get("/:id", parseUserId, getUserById);
-router.put("/:id", parseUserId, updateUserById);
-router.delete("/:id", parseUserId, deleteUserById);
 
 // Auth routes
 router.post("/signup", signup);
@@ -34,5 +28,14 @@ router.patch("/reset-password/:token", resetPassword);
 
 // Protected route (requires authentication)
 router.patch("/update-password", protect, updatePassword);
+
+// Users routes
+router.get("/", getAllUsers);
+router.post("/", createUser);
+router.get("/:id", parseUserId, getUserById);
+router.put("/:id", parseUserId, updateUserById);
+router.patch("/update-current-user", protect, updateCurrentUser);
+router.delete("/delete-current-user", protect, deleteCurrentUser);
+router.delete("/:id", parseUserId, deleteUserById);
 
 export default router;
