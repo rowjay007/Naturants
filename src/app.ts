@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import cors from "cors";
 import dotenv from "dotenv";
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import morgan from "morgan";
 import { protect } from "./middleware/authMiddleware";
 import naturantsRoutes from "./routes/naturantsRoutes";
@@ -18,10 +19,12 @@ const port =
     : process.env.DEV_PORT;
 
 // Middleware to set common response headers
-app.use((req: Request, res: Response, next: NextFunction) => {
-  res.setHeader("Content-Type", "application/json");
-  next();
-});
+app.use(
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.setHeader("Content-Type", "application/json");
+    next();
+  }
+);
 
 app.use(express.json());
 
@@ -33,25 +36,44 @@ app.use(
 
 app.use(cors());
 
+// Set various security-related HTTP headers
+app.use(helmet());
+
+// Rate Limiting Middleware
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+});
+
+app.use(limiter);
+
 // Protect these routes
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/naturants", protect, naturantsRoutes);
 
 // Custom error handling middleware
-// Custom error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: err.message });
-  } else {
-    console.error("❌ Error:", err);
-    if (process.env.NODE_ENV === "development") {
-      // In development, send detailed error information
-      res.status(500).json({ error: err.message, stack: err.stack });
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    if (err instanceof AppError) {
+      res.status(err.statusCode).json({ error: err.message });
     } else {
-      // In production, send a generic error message
-      res.status(500).json({ error: "Internal Server Error" });
+      console.error("❌ Error:", err);
+      if (process.env.NODE_ENV === "development") {
+        res.status(500).json({ error: err.message, stack: err.stack });
+      } else {
+        res.status(500).json({ error: "Internal Server Error" });
+      }
     }
   }
+);
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
 
 export { app, port };
