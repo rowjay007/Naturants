@@ -22,6 +22,23 @@ const createSendToken = (
 ): void => {
   const token = signToken(user._id);
 
+  // Set the token as a cookie in the response
+  const cookieOptions: any = {
+    expires: new Date(
+      Date.now() +
+        ((process.env.JWT_COOKIE_EXPIRES_IN as any) || 7) * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === "production") {
+    cookieOptions.secure = true; // Set cookie to be sent only over HTTPS in production
+  }
+
+  res.cookie("jwt", token, cookieOptions);
+
+  user.password = undefined;
+
   res.status(statusCode).json({
     status: "success",
     data: { user, token },
@@ -124,7 +141,6 @@ export const login = catchAsync(
     createSendToken(user, 200, res);
   }
 );
-
 
 export const forgotPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
