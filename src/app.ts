@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import rateLimit from "express-rate-limit"; // Import express-rate-limit
+import express, { NextFunction, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import morgan from "morgan";
 import { protect } from "./middleware/authMiddleware";
 import naturantsRoutes from "./routes/naturantsRoutes";
@@ -25,11 +26,14 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Apply rate limiting middleware
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests from this IP, please try again later.",
 });
 
 app.use(limiter);
+
+app.use(helmet());
 
 app.use(express.json());
 
