@@ -72,7 +72,9 @@ export const protect = async (
       process.env.JWT_SECRET || ""
     );
 
-    const user = await UserModel.findById(decoded.userId);
+    const user = await UserModel.findById(decoded.userId).select(
+      "_id username email role"
+    );
 
     if (!user) {
       return next(new AppError("User not found", 404));
