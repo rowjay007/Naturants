@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/usersModel";
 import { AppError } from "../utils/appError";
@@ -30,7 +30,6 @@ const createSendToken = (
 
 export const restrictTo = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    // Check if the current user's role is allowed
     if (!roles.includes(req.user.role)) {
       return next(new AppError("Permission denied", 403));
     }
@@ -38,16 +37,46 @@ export const restrictTo = (...roles: string[]) => {
   };
 };
 
+export const protect = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const token = req.headers.authorization;
+
+  if (!token || !token.startsWith("Bearer ")) {
+    return next(new AppError("Unauthorized - Please log in", 401));
+  }
+
+  try {
+    const tokenWithoutBearer = token.split(" ")[1];
+    const decoded: any = jwt.verify(
+      tokenWithoutBearer,
+      process.env.JWT_SECRET || ""
+    );
+
+    const user = await UserModel.findById(decoded.userId);
+
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+
+    req.user = user;
+
+    next();
+  } catch (error) {
+    return next(new AppError("Invalid token - Please log in", 401));
+  }
+};
+
 export const signup = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { username, email, password, passwordConfirm, role } = req.body;
 
-    // Check if the password and confirmPassword match
     if (password !== passwordConfirm) {
       throw new AppError("Passwords do not match", 400);
     }
 
-    // Check if the password meets the minimum requirements
     if (!isPasswordValid(password)) {
       throw new AppError(
         "Password does not meet the minimum requirements",
@@ -55,17 +84,14 @@ export const signup = catchAsync(
       );
     }
 
-    // Check if the user already exists
     const existingUser = await UserModel.findOne({ username });
 
     if (existingUser) {
       throw new AppError("Username is already taken", 400);
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create a new user with the specified role
     const newUser = await UserModel.create({
       username,
       email,
@@ -89,7 +115,7 @@ export const login = catchAsync(
     }
 
     // Check if the password is correct
-    const isPasswordCorrect = await bcrypt.compareSync(password, user.password);
+    const isPasswordCorrect = bcrypt.compareSync(password, user.password);
 
     if (!isPasswordCorrect) {
       throw new AppError("Invalid username or password", 401);
@@ -99,18 +125,17 @@ export const login = catchAsync(
   }
 );
 
+
 export const forgotPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { email } = req.body;
 
-    // Find user by email
     const user = await UserModel.findOne({ email });
 
     if (!user) {
       throw new AppError("User not found with this email address", 404);
     }
 
-    // Generate a reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
     user.passwordResetToken = crypto
       .createHash("sha256")
@@ -120,7 +145,6 @@ export const forgotPassword = catchAsync(
 
     await user.save({ validateBeforeSave: false });
 
-    // Send the reset token via email
     const resetURL = `${req.protocol}://${req.get(
       "host"
     )}/api/v1/users/reset-password/${resetToken}`;
@@ -144,12 +168,10 @@ export const resetPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { token, password, confirmPassword } = req.body;
 
-    // Check if token is provided
     if (!token) {
       throw new AppError("Token is required for password reset", 400);
     }
 
-    // Check if the password meets the minimum requirements
     if (!isPasswordValid(password)) {
       throw new AppError(
         "Password does not meet the minimum requirements",
@@ -157,13 +179,11 @@ export const resetPassword = catchAsync(
       );
     }
 
-    // Hash the token provided during the reset password request
     const hashedTokenProvided = crypto
       .createHash("sha256")
       .update(token)
       .digest("hex");
 
-    // Find the user by the hashed reset token and ensure it's not expired
     const user = await UserModel.findOne({
       passwordResetToken: hashedTokenProvided,
       passwordResetExpires: { $gt: new Date() },
@@ -173,12 +193,10 @@ export const resetPassword = catchAsync(
       throw new AppError("Token is invalid or has expired", 400);
     }
 
-    // Set new password only if passwords match
     if (password !== confirmPassword) {
       throw new AppError("Passwords do not match", 400);
     }
 
-    // Check if the new password is the same as the previous one
     if (await user.comparePassword(password)) {
       throw new AppError(
         "Cannot use the same password as the previous one",
@@ -186,34 +204,54 @@ export const resetPassword = catchAsync(
       );
     }
 
-    // Update the user's password and clear reset token fields
     user.password = password;
     user.passwordConfirm = confirmPassword;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
 
-    // Save the updated user with the new password
     await user.save();
 
     createSendToken(user, 200, res);
   }
 );
 
-// Function to check if password meets minimum requirements
-const isPasswordValid = (password: string): boolean => {
-  // Add your minimum requirements logic here
-  // For example, check if the password has minimum length, contains uppercase, lowercase, and special characters, etc.
+export const updatePassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { currentPassword, newPassword, newPasswordConfirm } = req.body;
 
-  // For simplicity, let's assume a minimum length of 8 characters
+    const user = await UserModel.findById(req.user._id).select("+password");
+
+    if (!user || !(await user.comparePassword(currentPassword))) {
+      throw new AppError("Current password is incorrect", 401);
+    }
+
+    if (newPassword !== newPasswordConfirm) {
+      throw new AppError("New passwords do not match", 400);
+    }
+
+    if (await user.comparePassword(newPassword)) {
+      throw new AppError(
+        "Cannot use the same password as the previous one",
+        400
+      );
+    }
+
+    user.password = newPassword;
+    user.passwordConfirm = newPasswordConfirm;
+    await user.save();
+
+    createSendToken(user, 200, res);
+  }
+);
+
+const isPasswordValid = (password: string): boolean => {
   return password.length >= 8;
 };
 
 export const deleteProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // Assuming user information is stored in req.user
     const user = req.user;
 
-    // Delete the user profile
     await UserModel.findByIdAndDelete(user._id);
 
     res.status(204).json({

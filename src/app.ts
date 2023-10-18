@@ -38,7 +38,8 @@ app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/naturants", protect, naturantsRoutes);
 
 // Custom error handling middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+// Custom error handling middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof AppError) {
     res.status(err.statusCode).json({ error: err.message });
   } else {
