@@ -10,6 +10,7 @@ import morgan from "morgan";
 import { protect } from "./middleware/authMiddleware";
 import naturantsRoutes from "./routes/naturantsRoutes";
 import usersRoutes from "./routes/usersRoutes";
+import reviewsRoutes from "./routes/reviewsRoutes";
 import { AppError } from "./utils/appError";
 
 dotenv.config();
@@ -55,6 +56,7 @@ app.use(cors());
 
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/naturants", protect, naturantsRoutes);
+app.use("/api/v1/reviews", reviewsRoutes);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof AppError) {
