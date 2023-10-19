@@ -22,10 +22,15 @@ router.use(protect);
 router.use("/:naturantId/reviews", reviewsRouter); // Mount the reviewsRouter
 
 router.get("/", getAllNaturants);
-router.post("/", createNaturant);
+router.post("/", restrictTo("admin", "manager"), createNaturant);
 router.get("/:id", parseNaturantId, getNaturantById);
 router.put("/:id", parseNaturantId, updateNaturantById);
-router.patch("/:id", parseNaturantId, updateNaturantPartially);
+router.patch(
+  "/:id",
+  restrictTo("admin", "manager"),
+  parseNaturantId,
+  updateNaturantPartially
+);
 
 // Use restrictTo middleware to allow delete only for certain roles
 router.delete(
@@ -36,6 +41,6 @@ router.delete(
 );
 
 // Alias route for top naturants
-router.get("/top", getTopNaturants);
+router.get("/top", restrictTo("admin", "manager"), getTopNaturants);
 
 export default router;
