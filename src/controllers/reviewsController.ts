@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// reviewsController.ts
-
 import { Request, Response, NextFunction } from "express";
 import ReviewModel from "../models/reviewsModel";
 import { AppError } from "../utils/appError";
@@ -83,5 +81,14 @@ export const deleteReview = catchAsync(
       status: "success",
       data: null,
     });
+  }
+);
+
+// Additional function for getting reviews for a specific naturant
+export const getReviewsForNaturant = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // Implement the logic to get reviews for a specific naturant
+    // You can use req.params.naturantId to identify the naturant and fetch associated reviews
+    // ...
   }
 );

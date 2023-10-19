@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// naturantsModel.ts
-
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 import slugify from "slugify";
 import validator from "validator";
 import { ValidationError } from "../utils/appError";
@@ -34,7 +32,7 @@ interface NaturantsData extends Document {
   phone: string;
   menuItems: MenuItem[];
   employees: Employee[];
-  orders: Order[];
+  orders: Types.DocumentArray<Order & Document>;
   customers: Customer[];
   slug?: string;
   updatedAt?: Date;
@@ -51,7 +49,7 @@ const employeeSchema = new Schema({
   position: { type: String, required: true },
 });
 
-const orderSchema = new Schema({
+const orderSchema = new Schema<Order>({
   orderNumber: { type: Number, required: true },
   tableNumber: { type: Number, required: true },
   items: [{ type: String, required: true }],
@@ -71,7 +69,7 @@ const customerSchema = new Schema({
   },
 });
 
-const naturantsSchema = new Schema({
+const naturantsSchema = new Schema<NaturantsData>({
   restaurantName: { type: String, required: true },
   address: { type: String, required: true },
   phone: {
@@ -103,6 +101,14 @@ naturantsSchema.pre<NaturantsData>("save", function (next) {
 naturantsSchema.pre("aggregate", function (next) {
   this.pipeline().unshift({ $match: { isActive: { $ne: false } } });
   next();
+});
+
+// Virtual Populate
+naturantsSchema.virtual("ordersData", {
+  ref: "Naturants",
+  localField: "_id",
+  foreignField: "orders",
+  justOne: false,
 });
 
 // Query middleware to handle validation errors

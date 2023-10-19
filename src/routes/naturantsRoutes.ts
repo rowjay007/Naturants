@@ -1,9 +1,7 @@
-// routes/naturantsRoutes.ts
-
 import express from "express";
-import { restrictTo } from "../controllers/authController";
 import * as NaturantController from "../controllers/naturantsController";
-import { protect } from "../middleware/authMiddleware";
+import reviewsRouter from "./reviewsRoutes"; // Import the reviewsRouter
+import { protect, restrictTo } from "../controllers/authController";
 
 const router = express.Router();
 
@@ -20,6 +18,8 @@ const {
 
 // Use the protect middleware to protect the routes
 router.use(protect);
+
+router.use("/:naturantId/reviews", reviewsRouter); // Mount the reviewsRouter
 
 router.get("/", getAllNaturants);
 router.post("/", createNaturant);
