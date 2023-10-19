@@ -16,6 +16,7 @@ import {
   parseUserId,
   updateCurrentUser,
   updateUserById,
+  me, // Include the "me" route here
 } from "../controllers/usersController";
 
 const router = express.Router();
@@ -32,6 +33,7 @@ router.patch("/update-password", protect, updatePassword);
 // Users routes
 router.get("/", getAllUsers);
 router.post("/", createUser);
+router.get("/me", protect, me); // Place the "me" route after other routes with parameters
 router.get("/:id", parseUserId, getUserById);
 router.put("/:id", parseUserId, updateUserById);
 router.patch("/update-current-user", protect, updateCurrentUser);

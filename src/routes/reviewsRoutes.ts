@@ -1,20 +1,22 @@
 // reviewsRoutes.ts
 
-import { Router } from "express";
-import * as ReviewsController from "../controllers/reviewsController"; // Import named exports
+import express from "express";
 import { protect, restrictTo } from "../controllers/authController";
+import * as reviewController from "../controllers/reviewsController";
 
-const router = Router();
+const router = express.Router();
+
+router.use(protect);
 
 router
   .route("/")
-  .get(ReviewsController.getAllReviews)
-  .post(protect, restrictTo("user", "admin"), ReviewsController.createReview);
+  .get(reviewController.getAllReviews)
+  .post(restrictTo("user", "admin"), reviewController.createReview);
 
 router
   .route("/:id")
-  .get(ReviewsController.getReviewById)
-  .patch(protect, restrictTo("user", "admin"), ReviewsController.updateReview)
-  .delete(protect, restrictTo("admin"), ReviewsController.deleteReview);
+  .get(reviewController.getReviewById)
+  .patch(restrictTo("user", "admin"), reviewController.updateReview)
+  .delete(restrictTo("admin"), reviewController.deleteReview);
 
 export default router;
