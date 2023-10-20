@@ -37,6 +37,8 @@ interface NaturantsData extends Document {
   slug?: string;
   updatedAt?: Date;
   isActive?: boolean;
+  ratingsAverage?: number;
+  ratingsQuantity?: number;
 }
 
 const menuItemSchema = new Schema({
@@ -89,6 +91,8 @@ const naturantsSchema = new Schema<NaturantsData>({
   slug: { type: String, unique: true, index: true },
   updatedAt: { type: Date, index: true },
   isActive: { type: Boolean, default: true, index: true },
+  ratingsAverage: { type: Number, default: 0 },
+  ratingsQuantity: { type: Number, default: 0 },
 });
 
 // Index on the compound field
