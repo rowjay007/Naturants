@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 import slugify from "slugify";
 import validator from "validator";
 import { ValidationError } from "../utils/appError";
@@ -70,8 +70,8 @@ const customerSchema = new Schema({
 });
 
 const naturantsSchema = new Schema<NaturantsData>({
-  restaurantName: { type: String, required: true },
-  address: { type: String, required: true },
+  restaurantName: { type: String, required: true, index: true },
+  address: { type: String, required: true, index: true },
   phone: {
     type: String,
     required: true,
@@ -80,15 +80,19 @@ const naturantsSchema = new Schema<NaturantsData>({
         validator.isMobilePhone(value, "any", { strictMode: false }),
       message: "Invalid phone number format. Use a valid phone number.",
     },
+    index: true,
   },
   menuItems: [menuItemSchema],
   employees: [employeeSchema],
   orders: [orderSchema],
   customers: [customerSchema],
-  slug: { type: String, unique: true },
-  updatedAt: { type: Date },
-  isActive: { type: Boolean, default: true },
+  slug: { type: String, unique: true, index: true },
+  updatedAt: { type: Date, index: true },
+  isActive: { type: Boolean, default: true, index: true },
 });
+
+// Index on the compound field
+naturantsSchema.index({ restaurantName: 1, address: 1 });
 
 // Pre-save middleware
 naturantsSchema.pre<NaturantsData>("save", function (next) {
