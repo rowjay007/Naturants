@@ -1,12 +1,10 @@
-// errorController.ts
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
 import jwt, { TokenExpiredError } from "jsonwebtoken";
 import { AppError, ValidationError } from "../utils/appError";
 
-// Handle validation errors 🚫
+// Handle validation errors
 export const handleValidationErrors = (
   err: ValidationError,
   req: Request,
@@ -16,7 +14,7 @@ export const handleValidationErrors = (
   res.status(err.statusCode).json({ error: err.message });
 };
 
-// Handle MongoDB duplicate key errors 🔄
+// Handle MongoDB duplicate key errors
 const handleDuplicateKeyError = (err: any): AppError => {
   const keyValueMatch = err.message.match(/(["'])(?:(?=(\\?))\2.)*?\1/);
   const key = keyValueMatch ? keyValueMatch[0] : "unknown";
@@ -24,30 +22,32 @@ const handleDuplicateKeyError = (err: any): AppError => {
   return new AppError(message, 400);
 };
 
-// Handle MongoDB validation errors 🔍
+// Handle MongoDB validation errors
 const handleMongoValidationError = (err: any): AppError => {
   const errors = Object.values(err.errors).map((el: any) => el.message);
   const message = `Invalid input data. ${errors.join(". ")}`;
   return new AppError(message, 400);
 };
 
-// Handle MongoDB CastError (invalid ObjectId) 🆘
+// Handle MongoDB CastError (invalid ObjectId)
 const handleCastError = (): AppError => {
   const message = "Invalid resource ID";
   return new AppError(message, 400);
 };
 
-// Handle JWT errors 🚫
+// Handle JWT errors
 const handleJWTError = (err: jwt.JsonWebTokenError): AppError => {
+  let message = "Invalid token. Please log in again.";
+
   if (err instanceof jwt.TokenExpiredError) {
-    return new AppError("Token has expired. Please log in again.", 401);
-  } else {
-    return new AppError("Invalid token. Please log in again.", 401);
+    message = "Token has expired. Please log in again.";
   }
+
+  return new AppError(message, 401);
 };
 
-// Handle operational errors during development 🚧
-const handleDevErrors = (err: any, res: Response): void => {
+// Handle operational errors during development
+export const handleDevelopmentErrors = (err: any, res: Response): void => {
   console.error("🚧 [Development Error]:", err);
   res.status(err.statusCode).json({
     error: err,
@@ -56,8 +56,8 @@ const handleDevErrors = (err: any, res: Response): void => {
   });
 };
 
-// Handle operational errors during production 🚨
-const handleProdErrors = (err: AppError, res: Response): void => {
+// Handle operational errors during production
+export const handleProductionErrors = (err: AppError, res: Response): void => {
   if (err.isOperational) {
     res.status(err.statusCode).json({ error: err.message });
   } else {
@@ -73,7 +73,7 @@ export const handleError = (
   next: NextFunction
 ): void => {
   if (process.env.NODE_ENV === "development") {
-    handleDevErrors(err, res);
+    handleDevelopmentErrors(err, res);
   } else {
     let error: AppError;
 
@@ -92,7 +92,7 @@ export const handleError = (
       error = new AppError("Something went wrong", 500);
     }
 
-    handleProdErrors(error, res);
+    handleProductionErrors(error, res);
   }
 };
 
