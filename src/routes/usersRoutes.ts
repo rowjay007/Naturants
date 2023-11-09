@@ -2,6 +2,7 @@ import express from "express";
 import {
   forgotPassword,
   login,
+  logout,
   protect,
   resetPassword,
   signup,
@@ -13,27 +14,25 @@ import {
   deleteUserById,
   getAllUsers,
   getUserById,
+  me,
   parseUserId,
   updateCurrentUser,
   updateUserById,
-  me, // Include the "me" route here
 } from "../controllers/usersController";
 
 const router = express.Router();
 
-// Auth routes
 router.post("/signup", signup);
 router.post("/login", login);
+router.post("/logout", logout);
 router.post("/forgot-password", forgotPassword);
 router.patch("/reset-password/:token", resetPassword);
 
-// Protected route (requires authentication)
 router.patch("/update-password", protect, updatePassword);
 
-// Users routes
 router.get("/", getAllUsers);
 router.post("/", createUser);
-router.get("/me", protect, me); // Place the "me" route after other routes with parameters
+router.get("/me", protect, me);
 router.get("/:id", parseUserId, getUserById);
 router.put("/:id", parseUserId, updateUserById);
 router.patch("/update-current-user", protect, updateCurrentUser);

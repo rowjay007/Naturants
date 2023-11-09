@@ -22,7 +22,6 @@ const createSendToken = (
 ): void => {
   const token = signToken(user._id);
 
-  // Set the token as a cookie in the response
   const cookieOptions: any = {
     expires: new Date(
       Date.now() +
@@ -32,7 +31,7 @@ const createSendToken = (
   };
 
   if (process.env.NODE_ENV === "production") {
-    cookieOptions.secure = true; // Set cookie to be sent only over HTTPS in production
+    cookieOptions.secure = true; 
   }
 
   res.cookie("jwt", token, cookieOptions);
@@ -125,15 +124,11 @@ export const signup = catchAsync(
 export const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { username, password } = req.body;
-
-    // Check if the user exists
     const user = await UserModel.findOne({ username });
 
     if (!user) {
       throw new AppError("Invalid username or password", 401);
     }
-
-    // Check if the password is correct
     const isPasswordCorrect = bcrypt.compareSync(password, user.password);
 
     if (!isPasswordCorrect) {
@@ -141,6 +136,17 @@ export const login = catchAsync(
     }
 
     createSendToken(user, 200, res);
+  }
+);
+
+
+export const logout = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    res.cookie("jwt", "loggedout", {
+      expires: new Date(Date.now() + 10 * 1000),
+      httpOnly: true,
+    });
+    res.status(200).json({ status: "success" });
   }
 );
 

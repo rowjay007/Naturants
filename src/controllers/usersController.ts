@@ -6,21 +6,14 @@ import { catchAsync } from "../utils/catchAsync";
 
 export const me = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // Check if the user is authenticated
     if (!req.user) {
       return next(new AppError("User not authenticated", 401));
     }
-
-    // The user ID is available in req.user
     const userId = req.user._id;
-
-    // Use findById without parsing the ID to avoid CastError
     const user = await UsersModel.findById(userId);
-
     if (!user) {
       return next(new AppError("User not found", 404));
     }
-
     res.status(200).json({
       status: "success",
       data: {
