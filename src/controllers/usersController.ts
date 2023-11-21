@@ -12,14 +12,24 @@ export const me = catchAsync(
       return next(new AppError("User not authenticated", 401));
     }
     const userId = req.user._id;
-    const user = await UsersModel.findById(userId);
-    if (!user) {
-      return next(new AppError("User not found", 404));
+
+    let cachedUser = await redisConfig.getAsync(`user:${userId}`);
+    if (!cachedUser) {
+      const user = await UsersModel.findById(userId);
+
+      if (!user) {
+        return next(new AppError("User not found", 404));
+      }
+      await redisConfig.setAsync(`user:${userId}`, JSON.stringify(user));
+
+      cachedUser = JSON.stringify(user);
+    } else {
+      cachedUser = JSON.parse(cachedUser);
     }
-    res.status(200).json({
+    res.json({
       status: "success",
       data: {
-        user,
+        user: cachedUser,
       },
     });
   }
@@ -111,8 +121,6 @@ export const getAllUsers = catchAsync(
     });
   }
 );
-
-
 
 export const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
