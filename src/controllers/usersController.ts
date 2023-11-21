@@ -1,8 +1,10 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import UsersModel from "../models/usersModel";
 import { AppError } from "../utils/appError";
 import { catchAsync } from "../utils/catchAsync";
+import redisConfig from "../utils/redisConfig";
 
 export const me = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -86,14 +88,31 @@ export const parseUserId = (
 
 export const getAllUsers = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const usersData = await UsersModel.find();
-    res.json({
+    let cashedUsers: string | null = await redisConfig.getAsync("allusers");
+
+    if (cashedUsers === null) {
+      const usersData = await UsersModel.find({});
+
+      // Ensure cashedUsers is assigned a non-null value
+      cashedUsers = JSON.stringify(usersData);
+
+      await redisConfig.setAsync("allusers", cashedUsers);
+    }
+
+    // Check again for null before using it
+    if (cashedUsers === null) {
+      return next(new AppError("Failed to retrieve users data", 500));
+    }
+
+    res.status(200).json({
       status: "success",
-      results: usersData.length,
-      data: { usersData },
+      results: JSON.parse(cashedUsers).length,
+      data: { usersData: JSON.parse(cashedUsers) },
     });
   }
 );
+
+
 
 export const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

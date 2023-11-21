@@ -1,18 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { createClient } from "redis";
+import dotenv from "dotenv";
+import RedisService from "./redisService";
 
-const client = createClient({
+// Load environment variables from .env file
+dotenv.config();
+
+const redisConfig = new RedisService({
   password: process.env.REDIS_PASSWORD,
-  socket: {
-    host: process.env.REDIS_HOST,
-    port: 14238,
-  },
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT || "6379"),
 });
 
-client.on("error", (err) => console.log("Redis Client Error", err));
-
-if (!client.isOpen) {
-  client.connect();
-}
-
-export { client };
+export default redisConfig;

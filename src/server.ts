@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { app } from "./app";
+import RedisService from "./utils/redisService";
 
 dotenv.config();
 
@@ -18,10 +19,22 @@ const mongooseOptions = {
   useUnifiedTopology: true,
 } as mongoose.ConnectOptions;
 
+const redisConfig = new RedisService({
+  password: process.env.REDIS_PASSWORD,
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT || "6379"),
+});
+
 mongoose
   .connect(mongoUri || "", mongooseOptions)
   .then(() => {
     console.log("✅ Connected to MongoDB");
+
+    // Check if Redis is ready
+    redisConfig.getClient().on("ready", () => {
+      console.log("🔄 Redis is running");
+    });
+
     app.listen(serverPort, () => {
       console.log(`🚀 Server is listening on port ${serverPort}`);
     });
