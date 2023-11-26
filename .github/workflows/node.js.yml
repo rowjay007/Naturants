@@ -3,14 +3,15 @@ name: CI
 on:
   push:
     branches:
-      - main 
+      - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [16]  
+        node-version: [16]
 
     steps:
       - name: Checkout code
@@ -26,8 +27,8 @@ jobs:
 
       - name: Set up environment variables
         run: |
-          cp .env.example .env
-          export $(grep -v '^#' .env | xargs)
+          if [ -f .env.example ]; then cp .env.example .env; fi
+          export $(grep -v '^#' .env | xargs) || true
 
       - name: Linting
         run: npm run lint
