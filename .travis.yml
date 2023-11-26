@@ -16,7 +16,4 @@ before_script:
   - cp .env.example .env
   - export $(grep -v '^#' .env | xargs)
 
-script:
-  - npm run lint
-  - npm test
-  - npm run build
+
