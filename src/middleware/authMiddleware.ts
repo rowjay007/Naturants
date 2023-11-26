@@ -8,7 +8,6 @@ export const protect = (
   res: Response,
   next: NextFunction
 ): void => {
-  // 1) Check if the token exists in the headers
   const token = req.headers.authorization;
 
   if (!token || !token.startsWith("Bearer ")) {
@@ -16,7 +15,6 @@ export const protect = (
   }
 
   try {
-    // 2) Verify the token
     const tokenWithoutBearer = token.split(" ")[1];
     const decoded: any = jwt.verify(
       tokenWithoutBearer,
