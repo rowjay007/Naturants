@@ -3,9 +3,9 @@ import { Redis, RedisOptions } from "ioredis";
 import { promisify } from "util";
 
 class RedisService {
+  private static instance: RedisService | null = null;
   private client: Redis;
 
-  // Initialize methods with proper types
   public getAsync!: (key: string) => Promise<string | null>;
   public setAsync!: (key: string, value: string) => Promise<string>;
   public delAsync!: (key: string) => Promise<number>;
@@ -29,11 +29,9 @@ class RedisService {
   ) => Promise<number>;
   public hkeysAsync!: (key: string) => Promise<string[]>;
 
-  constructor(options: RedisOptions) {
-    // Initialize the client
+  private constructor(options: RedisOptions) {
     this.client = new Redis(options);
 
-    // Bind methods after the client is initialized
     this.getAsync = promisify(this.client.get).bind(this.client) as (
       key: string
     ) => Promise<string | null>;
@@ -66,7 +64,10 @@ class RedisService {
       value: number
     ) => Promise<number>;
 
-    this.client.on("error", (err) => console.log("Redis Client Error", err));
+    this.client.on("error", (err) => {
+      console.error("Redis Client Error", err);
+    });
+
     this.client.on("connect", () => console.log("Redis Client Connected"));
     this.client.on("ready", () => console.log("Redis Client Ready"));
     this.client.on("end", () => console.log("Redis Client Ended"));
@@ -76,6 +77,13 @@ class RedisService {
     this.client.on("warning", (err) =>
       console.log("Redis Client Warning", err)
     );
+  }
+
+  public static getInstance(options: RedisOptions): RedisService {
+    if (!this.instance) {
+      this.instance = new RedisService(options);
+    }
+    return this.instance;
   }
 
   public getClient(): Redis {

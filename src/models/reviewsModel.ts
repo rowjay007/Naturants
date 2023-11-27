@@ -4,7 +4,7 @@ import NaturantsModel from "./naturantsModel";
 
 interface ReviewData extends Document {
   user: string;
-  naturant: Types.ObjectId; // Change this line
+  naturant: Types.ObjectId; 
   content: string;
   rating: number;
   createdAt: Date;
@@ -32,10 +32,7 @@ const reviewSchema = new Schema<ReviewData>(
   }
 );
 
-// Ensure a user can only have one review for a naturant
 reviewSchema.index({ user: 1, naturant: 1 }, { unique: true });
-
-// Static method to calculate average rating
 reviewSchema.statics.calculateAverageRating = async function (
   naturantId: Types.ObjectId
 ): Promise<number | null> {

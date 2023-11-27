@@ -1,7 +1,7 @@
 import express from "express";
+import { protect, restrictTo } from "../controllers/authController";
 import * as NaturantController from "../controllers/naturantsController";
 import reviewsRouter from "./reviewsRoutes"; // Import the reviewsRouter
-import { protect, restrictTo } from "../controllers/authController";
 
 const router = express.Router();
 
@@ -31,16 +31,14 @@ router.patch(
   parseNaturantId,
   updateNaturantPartially
 );
-
-// Use restrictTo middleware to allow delete only for certain roles
 router.delete(
   "/:id",
   restrictTo("admin", "manager"),
   parseNaturantId,
   deleteNaturantById
 );
-
-// Alias route for top naturants
 router.get("/top", restrictTo("admin", "manager"), getTopNaturants);
+router.get("/:id", parseNaturantId, getNaturantById);
+
 
 export default router;

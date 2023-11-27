@@ -1,17 +1,26 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import ReviewModel from "../models/reviewsModel";
 import { AppError } from "../utils/appError";
 import { catchAsync } from "../utils/catchAsync";
+import redisConfig from "../utils/redisConfig";
 
 export const getAllReviews = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const reviews = await ReviewModel.find();
+    let cashedReviews = await redisConfig.getAsync("allreviews");
+
+    if (!cashedReviews) {
+      const review = await ReviewModel.find();
+
+      await redisConfig.setAsync("allreviews", JSON.stringify(review));
+
+      cashedReviews = JSON.stringify(review);
+    }
     res.status(200).json({
       status: "success",
-      results: reviews.length,
+      results: JSON.parse(cashedReviews).length,
       data: {
-        reviews,
+        reviews: JSON.parse(cashedReviews),
       },
     });
   }
@@ -84,11 +93,26 @@ export const deleteReview = catchAsync(
   }
 );
 
-// Additional function for getting reviews for a specific naturant
 export const getReviewsForNaturant = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // Implement the logic to get reviews for a specific naturant
-    // You can use req.params.naturantId to identify the naturant and fetch associated reviews
-    // ...
+    const { naturantId } = req.params;
+    let cachedReviews = await redisConfig.getAsync(`reviews:${naturantId}`);
+
+    if (!cachedReviews) {
+      const reviews = await ReviewModel.find({ naturant: naturantId });
+      await redisConfig.setAsync(
+        `reviews:${naturantId}`,
+        JSON.stringify(reviews)
+      );
+
+      cachedReviews = JSON.stringify(reviews);
+    }
+    res.status(200).json({
+      status: "success",
+      results: JSON.parse(cachedReviews).length,
+      data: {
+        reviews: JSON.parse(cachedReviews),
+      },
+    });
   }
 );

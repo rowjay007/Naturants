@@ -8,6 +8,7 @@ import UserModel from "../models/usersModel";
 import { AppError } from "../utils/appError";
 import { catchAsync } from "../utils/catchAsync";
 import { sendEmail } from "../utils/email";
+import redisConfig from "../utils/redisConfig";
 
 const signToken = (userId: string): string => {
   return jwt.sign({ userId }, process.env.JWT_SECRET || "", {
@@ -31,7 +32,7 @@ const createSendToken = (
   };
 
   if (process.env.NODE_ENV === "production") {
-    cookieOptions.secure = true; 
+    cookieOptions.secure = true;
   }
 
   res.cookie("jwt", token, cookieOptions);
@@ -71,15 +72,25 @@ export const protect = async (
       process.env.JWT_SECRET || ""
     );
 
-    const user = await UserModel.findById(decoded.userId).select(
-      "_id username email role"
-    );
+    const userId = decoded.userId;
+    let cachedUser = await redisConfig.getAsync(`user:${userId}`);
 
-    if (!user) {
-      return next(new AppError("User not found", 404));
+    if (!cachedUser) {
+      const user = await UserModel.findById(userId).select(
+        "_id username email role"
+      );
+
+      if (!user) {
+        return next(new AppError("User not found", 404));
+      }
+
+      await redisConfig.setAsync(`user:${userId}`, JSON.stringify(user));
+
+      cachedUser = JSON.stringify(user);
     }
+    const parsedUser = JSON.parse(cachedUser);
 
-    req.user = user;
+    req.user = parsedUser;
 
     next();
   } catch (error) {
@@ -138,7 +149,6 @@ export const login = catchAsync(
     createSendToken(user, 200, res);
   }
 );
-
 
 export const logout = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
