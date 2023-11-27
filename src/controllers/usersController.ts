@@ -3,6 +3,7 @@
 import { NextFunction, Request, Response } from "express";
 import UsersModel from "../models/usersModel";
 import { AppError } from "../utils/appError";
+import { cacheUserData, getCachedUserData } from "../utils/cache";
 import { catchAsync } from "../utils/catchAsync";
 import redisConfig from "../utils/redisConfig";
 
@@ -11,27 +12,33 @@ export const me = catchAsync(
     if (!req.user) {
       return next(new AppError("User not authenticated", 401));
     }
-    const userId = req.user._id;
 
-    let cachedUser = await redisConfig.getAsync(`user:${userId}`);
+    const userId = req.user._id;
+    const cachedUser = await getCachedUserData(userId);
+
     if (!cachedUser) {
       const user = await UsersModel.findById(userId);
 
       if (!user) {
         return next(new AppError("User not found", 404));
       }
-      await redisConfig.setAsync(`user:${userId}`, JSON.stringify(user));
 
-      cachedUser = JSON.stringify(user);
+      await cacheUserData(userId, user);
+
+      res.json({
+        status: "success",
+        data: {
+          user,
+        },
+      });
     } else {
-      cachedUser = JSON.parse(cachedUser);
+      res.json({
+        status: "success",
+        data: {
+          user: cachedUser,
+        },
+      });
     }
-    res.json({
-      status: "success",
-      data: {
-        user: cachedUser,
-      },
-    });
   }
 );
 

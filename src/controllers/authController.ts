@@ -6,9 +6,9 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/usersModel";
 import { AppError } from "../utils/appError";
+import { cacheUserData, getCachedUserData } from "../utils/cache";
 import { catchAsync } from "../utils/catchAsync";
 import { sendEmail } from "../utils/email";
-import redisConfig from "../utils/redisConfig";
 
 const signToken = (userId: string): string => {
   return jwt.sign({ userId }, process.env.JWT_SECRET || "", {
@@ -73,7 +73,7 @@ export const protect = async (
     );
 
     const userId = decoded.userId;
-    let cachedUser = await redisConfig.getAsync(`user:${userId}`);
+    const cachedUser = await getCachedUserData(userId);
 
     if (!cachedUser) {
       const user = await UserModel.findById(userId).select(
@@ -84,13 +84,12 @@ export const protect = async (
         return next(new AppError("User not found", 404));
       }
 
-      await redisConfig.setAsync(`user:${userId}`, JSON.stringify(user));
+      await cacheUserData(userId, user);
 
-      cachedUser = JSON.stringify(user);
+      req.user = user;
+    } else {
+      req.user = cachedUser;
     }
-    const parsedUser = JSON.parse(cachedUser);
-
-    req.user = parsedUser;
 
     next();
   } catch (error) {
