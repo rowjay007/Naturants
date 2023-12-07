@@ -34,9 +34,26 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-app.use(helmet());
-app.use(express.json());
+// Security middleware
+app.use(helmet()); // Enable basic security headers
 
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "https://fonts.googleapis.com"],
+      fontSrc: ["https://fonts.gstatic.com"],
+      // Add other directives as needed
+    },
+  })
+);
+
+app.use(helmet.xContentTypeOptions()); // Set X-Content-Type-Options header
+app.use(helmet.xFrameOptions()); // Set X-Frame-Options header
+app.use(helmet.xXssProtection()); // Set X-XSS-Protection header
+
+app.use(express.json());
 app.use(mongoSanitize());
 
 app.use(
