@@ -12,6 +12,7 @@ import naturantsRoutes from "./routes/naturantsRoutes";
 import reviewsRoutes from "./routes/reviewsRoutes";
 import usersRoutes from "./routes/usersRoutes";
 import { AppError } from "./utils/appError";
+import logger from "./utils/logger";
 
 dotenv.config();
 
@@ -74,16 +75,16 @@ app.use("/api/v1/reviews", reviewsRoutes);
 app.use("/api/v1/naturants/:naturantId/reviews", protect, reviewsRoutes);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  logger.error(err.message, { error: err.stack });
   if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: err.message });
-  } else {
-    console.error("❌ Error:", err);
-    if (process.env.NODE_ENV === "development") {
-      res.status(500).json({ error: err.message, stack: err.stack });
-    } else {
-      res.status(500).json({ error: "Internal Server Error" });
-    }
+    return res.status(err.statusCode).json({ error: err.message });
   }
+
+  if (process.env.NODE_ENV === "development") {
+    return res.status(500).json({ error: err.message, stack: err.stack });
+  }
+
+  return res.status(500).json({ error: "Internal Server Error" });
 });
 
 export { app, port };
