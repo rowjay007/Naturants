@@ -1,0 +1,39 @@
+version: '3'
+services:
+  naturants-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TZ: Africa/Lagos
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - DATABASE_LOCAL=${DATABASE_LOCAL}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEV_PORT=${DEV_PORT}
+      - PROD_PORT=${PROD_PORT}
+      - NODE_ENV=${NODE_ENV}
+      - USERNAME=${USERNAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - TOKEN_EXPIRE=${TOKEN_EXPIRE}
+      - JWT_COOKIE_EXPIRES_IN=${JWT_COOKIE_EXPIRES_IN}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_USERNAME=${EMAIL_USERNAME}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - CALLBACK_URL=${CALLBACK_URL}
+      - SSL_PRIVATE_KEY_PATH=${SSL_PRIVATE_KEY_PATH}
+      - SSL_CERTIFICATE_PATH=${SSL_CERTIFICATE_PATH}
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
