@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import compression from "compression";
 import cors from "cors";
 import dotenv from "dotenv";
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import mongoSanitize from "express-mongo-sanitize";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -22,10 +23,12 @@ const port =
     ? process.env.PROD_PORT
     : process.env.DEV_PORT;
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  res.setHeader("Content-Type", "application/json");
-  next();
-});
+app.use(
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.setHeader("Content-Type", "application/json");
+    next();
+  }
+);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -35,8 +38,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// Security middleware
-app.use(helmet()); // Enable basic security headers
+app.use(helmet());
 
 app.use(
   helmet.contentSecurityPolicy({
@@ -50,9 +52,9 @@ app.use(
   })
 );
 
-app.use(helmet.xContentTypeOptions()); // Set X-Content-Type-Options header
-app.use(helmet.xFrameOptions()); // Set X-Frame-Options header
-app.use(helmet.xXssProtection()); // Set X-XSS-Protection header
+app.use(helmet.xContentTypeOptions()); 
+app.use(helmet.xFrameOptions()); 
+app.use(helmet.xXssProtection()); 
 
 app.use(express.json());
 app.use(mongoSanitize());
@@ -67,6 +69,8 @@ app.use(
 
 app.use(morgan("combined"));
 
+app.use(compression());
+
 app.use(cors());
 
 app.use("/api/v1/users", usersRoutes);
@@ -74,17 +78,24 @@ app.use("/api/v1/naturants", protect, naturantsRoutes);
 app.use("/api/v1/reviews", reviewsRoutes);
 app.use("/api/v1/naturants/:naturantId/reviews", protect, reviewsRoutes);
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  logger.error(err.message, { error: err.stack });
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).json({ error: err.message });
-  }
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    logger.error(err.message, { error: err.stack });
+    if (err instanceof AppError) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
 
-  if (process.env.NODE_ENV === "development") {
-    return res.status(500).json({ error: err.message, stack: err.stack });
-  }
+    if (process.env.NODE_ENV === "development") {
+      return res.status(500).json({ error: err.message, stack: err.stack });
+    }
 
-  return res.status(500).json({ error: "Internal Server Error" });
-});
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+);
 
 export { app, port };
