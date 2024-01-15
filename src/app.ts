@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import compression from "compression";
 import cors from "cors";
 import dotenv from "dotenv";
+import expectCt from "expect-ct";
 import express from "express";
 import mongoSanitize from "express-mongo-sanitize";
 import rateLimit from "express-rate-limit";
@@ -38,7 +40,19 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    referrerPolicy: { policy: "same-origin" },
+  })
+);
+
+app.use(
+  expectCt({
+    enforce: true,
+    maxAge: 30,
+  })
+);
 
 app.use(
   helmet.contentSecurityPolicy({
@@ -52,9 +66,9 @@ app.use(
   })
 );
 
-app.use(helmet.xContentTypeOptions()); 
-app.use(helmet.xFrameOptions()); 
-app.use(helmet.xXssProtection()); 
+app.use(helmet.xContentTypeOptions());
+app.use(helmet.xFrameOptions());
+app.use(helmet.xXssProtection());
 
 app.use(express.json());
 app.use(mongoSanitize());
