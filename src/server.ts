@@ -25,6 +25,12 @@ const redisConfig = RedisService.getInstance({
   port: parseInt(process.env.REDIS_PORT || "6379"),
 });
 
+// Import the AppError class
+import { AppError } from "./utils/appError";
+import logger from "./utils/logger";
+
+// ...
+
 mongoose
   .connect(mongoUri || "", mongooseOptions)
   .then(() => {
@@ -41,13 +47,13 @@ mongoose
   })
   .catch((error) => {
     console.error("❌ Error connecting to MongoDB:", error);
+
+    // Log the error using your logger
+    logger.error("Error connecting to MongoDB", { error: error.stack });
+
+    // If the error is critical, terminate the application
+    if (error instanceof AppError && error.isOperational) {
+      console.error("Critical error. Terminating the application.");
+      process.exit(1);
+    }
   });
-
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("🔥 Unhandled Rejection at:", promise, "reason:", reason);
-});
-
-process.on("uncaughtException", (error) => {
-  console.error("💥 Uncaught Exception:", error);
-  process.exit(1);
-});
