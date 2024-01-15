@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["./types.d.ts"],
+    "types": ["jest", "./types.d.ts"],
     "target": "ESNext",
     "outDir": "./dist",
     "rootDir": "./src",
@@ -10,6 +10,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "src/utils/redisConfig.ts"],
+  "include": ["src/**/*.ts", "src/utils/redisConfig.ts", "__tests__/**/*.ts"],
   "exclude": ["node_modules"]
 }

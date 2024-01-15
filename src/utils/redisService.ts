@@ -68,11 +68,11 @@ class RedisService {
       console.error("Redis Client Error", err);
     });
 
-    this.client.on("connect", () => console.log("Redis Client Connected"));
-    this.client.on("ready", () => console.log("Redis Client Ready"));
-    this.client.on("end", () => console.log("Redis Client Ended"));
-    this.client.on("reconnecting", () =>
-      console.log("Redis Client Reconnecting")
+    this.client.on("connect", () => console.log("Redis Client Connected ✅🚀"));
+    this.client.on("ready", () => console.log("Redis Client Ready ✅🚀"));
+    this.client.on("end", () => console.log("Redis Client Ended ✅🚀"));
+    this.client.on("reconnecting😤", () =>
+      console.log("Redis Client Reconnecting😡")
     );
     this.client.on("warning", (err) =>
       console.log("Redis Client Warning", err)

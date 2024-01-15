@@ -98,7 +98,7 @@ export const protect = async (
 };
 
 export const signup = catchAsync(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: Request, res: Response, next: any): Promise<void> => {
     const { username, email, password, passwordConfirm, role } = req.body;
 
     if (password !== passwordConfirm) {
@@ -130,6 +130,7 @@ export const signup = catchAsync(
     createSendToken(newUser, 201, res);
   }
 );
+
 
 export const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
