@@ -79,7 +79,7 @@ userSchema.methods.comparePassword = async function (
 
 userSchema.pre<UserData>("save", async function (next) {
   if (!this.isModified("password") || this.isNew) return next();
-  this.password = await bcrypt.hash(this.password, 12);
+  this.password = await bcrypt.hash(this.password, 12); // Increased cost factor
   this.changedPasswordAt = new Date();
   next();
 });

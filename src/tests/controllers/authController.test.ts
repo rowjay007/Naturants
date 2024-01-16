@@ -1,40 +1,62 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Request, Response } from "express";
-import { signup } from "../../controllers/authController";
-import { catchAsync } from "../../utils/catchAsync";
+// authController.test.ts
 
-describe("Auth Controller", () => {
-  // Mock Express Request and Response objects
-  const req = {} as Request;
-  const res = {} as Response;
+import request from "supertest";
+import { app } from "../../app";
+import RedisService from "../../utils/redisService";
+import { closeDatabase, setupDatabase } from "../setup";
 
-  // Mock Express response methods
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
+jest.mock("../../utils/redisService");
 
-  // Reset the mock status and json methods before each test
-  beforeEach(() => {
-    jest.clearAllMocks();
+beforeAll(async () => {
+  await setupDatabase();
+
+  (RedisService.getInstance as jest.Mock).mockReturnValue({
+    getClient: jest.fn(),
   });
+});
 
-  describe("signup", () => {
-    it("should return a 201 status code and a JSON response", async () => {
-      // Mock the necessary request body
-      req.body = {
-        username: "testuser08",
-        email: "test08@example.com",
-        password: "testpassword",
-        passwordConfirm: "testpassword",
-        role: "user",
-      };
+afterAll(async () => {
+  await closeDatabase();
+});
 
-      // Use catchAsync to handle asynchronous errors in the signup function
-      await catchAsync(signup as any)(req, res, jest.fn() as any);
-      // Assert that the status function was called with the expected argument
-      expect(res.status).toHaveBeenCalledWith(201);
-
-      // Assert that the json function was called
-      expect(res.json).toHaveBeenCalled();
+describe("AuthController", () => {
+  it("should sign up a new user", async () => {
+    const response = await request(app).post("/api/v1/users/signup").send({
+      username: "testuser",
+      email: "test@example.com",
+      password: "password123",
+      passwordConfirm: "password123",
+      role: "user",
     });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.body.status).toBe("success");
+    expect(response.body.data).toHaveProperty("user");
+    expect(response.body.data).toHaveProperty("token");
+    expect(response.body.data.user).toHaveProperty("id");
+    expect(response.body.data.user).toHaveProperty("username");
+    expect(response.body.data.user).toHaveProperty("email");
+    expect(response.body.data.user).toHaveProperty("role");
   });
+
+  it("should log in an existing user", async () => {
+    const response = await request(app).post("/api/v1/users/login").send({
+      username: "testuser",
+      password: "password123",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.data).toHaveProperty("user");
+    expect(response.body.data).toHaveProperty("token");
+  });
+
+  it("should logout out existing user", async () => {
+    const response = await request(app).post("/api/v1/users/logout");
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  afterAll(() => {});
 });
