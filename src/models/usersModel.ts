@@ -4,7 +4,7 @@ import crypto from "crypto";
 import mongoose, { Document, Model, Schema } from "mongoose";
 import validator from "validator";
 
-interface UserData extends Document {
+export interface UserData extends Document {
   username: string;
   email: string;
   password: string;

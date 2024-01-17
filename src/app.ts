@@ -10,7 +10,6 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import hpp from "hpp";
 import morgan from "morgan";
-import { protect } from "./middleware/authMiddleware";
 import naturantsRoutes from "./routes/naturantsRoutes";
 import reviewsRoutes from "./routes/reviewsRoutes";
 import usersRoutes from "./routes/usersRoutes";
@@ -88,9 +87,9 @@ app.use(compression());
 app.use(cors());
 
 app.use("/api/v1/users", usersRoutes);
-app.use("/api/v1/naturants", protect, naturantsRoutes);
+app.use("/api/v1/naturants", naturantsRoutes);
 app.use("/api/v1/reviews", reviewsRoutes);
-app.use("/api/v1/naturants/:naturantId/reviews", protect, reviewsRoutes);
+app.use("/api/v1/naturants/:naturantId/reviews", reviewsRoutes);
 
 app.use(
   (
