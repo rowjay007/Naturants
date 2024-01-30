@@ -39,6 +39,7 @@ interface NaturantsData extends Document {
   isActive?: boolean;
   ratingsAverage?: number;
   ratingsQuantity?: number;
+  numRatings?: number;
 }
 
 const menuItemSchema = new Schema({

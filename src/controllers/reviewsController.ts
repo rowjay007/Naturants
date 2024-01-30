@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
-import ReviewModel from "../models/reviewsModel";
+import {
+  default as ReviewModel,
+  default as ReviewsModel,
+} from "../models/reviewsModel";
 import { AppError } from "../utils/appError";
 import { catchAsync } from "../utils/catchAsync";
 import redisConfig from "../utils/redisConfig";
@@ -44,13 +48,36 @@ export const getReviewById = catchAsync(
 
 export const createReview = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const review = await ReviewModel.create(req.body);
-    res.status(201).json({
-      status: "success",
-      data: {
-        review,
-      },
-    });
+    const { naturantId, ...reviewData } = req.body;
+
+    if (!naturantId) {
+      return next(
+        new AppError("Naturant ID is required for creating a review", 400)
+      );
+    }
+    const userId = req.user?.id;
+
+    try {
+      const review = await ReviewsModel.create({
+        user: userId,
+        naturant: naturantId,
+        ...reviewData,
+      });
+
+      await ReviewsModel.calculateAverageRating(naturantId);
+
+      res.status(201).json({
+        status: "success",
+        data: {
+          review,
+        },
+      });
+    } catch (error: any) {
+      if (error.name === "ValidationError") {
+        return next(new AppError(error.message, 400));
+      }
+      return next(error);
+    }
   }
 );
 

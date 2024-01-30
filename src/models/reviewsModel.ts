@@ -3,8 +3,8 @@ import mongoose, { Document, Model, Schema, Types } from "mongoose";
 import NaturantsModel from "./naturantsModel";
 
 interface ReviewData extends Document {
-  user: string;
-  naturant: Types.ObjectId; 
+  user: Types.ObjectId | any;
+  naturant: Types.ObjectId | any;
   content: string;
   rating: number;
   createdAt: Date;
@@ -50,10 +50,19 @@ reviewSchema.statics.calculateAverageRating = async function (
   ]);
 
   if (stats.length > 0) {
-    await NaturantsModel.findByIdAndUpdate(naturantId, {
-      averageRating: stats[0].avgRating,
-      numRatings: stats[0].nRating,
+    const naturant = await NaturantsModel.findById(naturantId).populate({
+      path: "reviews",
+      populate: {
+        path: "user",
+        model: "User",
+      },
     });
+
+    if (naturant) {
+      naturant.ratingsAverage = stats[0].avgRating;
+      naturant.numRatings = stats[0].nRating;
+      await naturant.save();
+    }
   } else {
     await NaturantsModel.findByIdAndUpdate(naturantId, {
       averageRating: null,

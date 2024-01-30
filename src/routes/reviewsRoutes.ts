@@ -11,7 +11,7 @@ router.use(protect);
 router
   .route("/")
   .get(reviewController.getAllReviews)
-  .post(restrictTo("user", "admin"), reviewController.createReview);
+  .post(protect, restrictTo("user", "admin"), reviewController.createReview);
 
 router
   .route("/:id")
