@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import compression from "compression";
 import cors from "cors";
@@ -6,6 +5,13 @@ import dotenv from "dotenv";
 import expectCt from "expect-ct";
 import express from "express";
 import mongoSanitize from "express-mongo-sanitize";
+import {
+  collectDefaultMetrics,
+  Registry,
+  Counter,
+  register,
+} from "prom-client"; // Import prom-client
+import promBundle from "express-prom-bundle";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import hpp from "hpp";
@@ -86,10 +92,55 @@ app.use(compression());
 
 app.use(cors());
 
+// Setup prom-client registry
+const registry = new Registry();
+// Collect default metrics
+collectDefaultMetrics({ register: registry });
+
+// Create promBundle middleware with custom registry
+const metricsMiddleware = promBundle({
+  includeMethod: true,
+  includePath: true,
+  customLabels: {
+    module: "metrics",
+  },
+  promRegistry: registry, // Use the custom registry
+  promClient: {
+    collectDefaultMetrics: {}, // Collect default metrics separately
+  },
+  buckets: [0.1, 0.3, 1.2, 5.0],
+});
+
+app.use(metricsMiddleware);
+
+// Define and register a custom counter metric with custom labels
+const customCounter = new Counter({
+  name: "my_custom_counter",
+  help: "Description of my custom counter",
+  labelNames: ["method", "endpoint"], // Define custom labels
+});
+register.setDefaultLabels({ app: "your_application_name" }); // Set default labels
+
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/naturants", naturantsRoutes);
 app.use("/api/v1/reviews", reviewsRoutes);
 app.use("/api/v1/naturants/:naturantId/reviews", reviewsRoutes);
+
+// Metrics endpoint
+app.get("/api/v1/metrics", (req, res) => {
+  registry
+    .metrics()
+    .then((metrics) => {
+      res.set("Content-Type", registry.contentType);
+      // Increment custom counter
+      customCounter.inc({ method: req.method, endpoint: req.originalUrl });
+      res.send(metrics);
+    })
+    .catch((error) => {
+      logger.error(`Error fetching metrics: ${error.message}`);
+      res.status(500).json({ error: "Internal Server Error" });
+    });
+});
 
 app.use(
   (
