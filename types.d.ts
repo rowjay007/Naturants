@@ -8,7 +8,6 @@ declare global {
       MONGO_URI: string;
       DEV_PORT: string;
       PROD_PORT: string;
-      // Add other environment variables here
     }
   }
 
@@ -25,6 +24,9 @@ declare global {
       user?: any;
     }
   }
+  
 }
+
+ declare module "xss-clean";
 
 export {};
